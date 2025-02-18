@@ -32,6 +32,7 @@ import SkeletonMessage from "@/components/loaders/SkeletonMessage";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
 import styles from "./index.styles";
 import { formatTimestamp } from "@/utils/time";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -406,7 +407,7 @@ export default function ChatScreen() {
                     marginRight: 10,
                   }}
                 />
-                <Text style={{ color: "white", fontSize: 16 }}>
+                <Text style={{ color: "white", fontSize: wp("4.4%") }}>
                   {chatType === "group" ? chatData?.groupName : userData?.name}
                 </Text>
               </View>
@@ -483,7 +484,7 @@ export default function ChatScreen() {
                   >
                     {chatType === "group" && item.senderName && (
                       <Text
-                        style={{ color: "#ccc", fontSize: 12, marginBottom: 2 }}
+                        style={{ color: "#ccc", fontSize: wp("3.3%"), marginBottom: 2 }}
                       >
                         {item.senderName}
                       </Text>

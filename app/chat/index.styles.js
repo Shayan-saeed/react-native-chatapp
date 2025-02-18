@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   container: {
@@ -15,7 +16,7 @@ export default StyleSheet.create({
     borderBottomColor: "#333",
   },
   username: {
-    fontSize: 20,
+    fontSize: wp("5.5%"),
     fontWeight: "bold",
     color: "#fff",
   },
@@ -33,7 +34,7 @@ export default StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "white",
   },
   chatItem: {
@@ -54,12 +55,12 @@ export default StyleSheet.create({
     flex: 1,
   },
   chatName: {
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
     color: "white",
   },
   lastMessage: {
-    fontSize: 14,
+    fontSize: wp("3.9%"),
     color: "#888",
   },
   timestampContainer: {
@@ -68,7 +69,7 @@ export default StyleSheet.create({
     gap: 3,
   },
   timestamp: {
-    fontSize: 12,
+    fontSize: wp("3.3%"),
     color: "#aaa",
     marginTop: 10,
   },
@@ -98,7 +99,7 @@ export default StyleSheet.create({
   },
   unreadText: {
     color: "white",
-    fontSize: 12,
+    fontSize: wp("3.3%"),
     fontWeight: "bold",
   },
   backdropStyle: {
@@ -109,7 +110,7 @@ export default StyleSheet.create({
     paddingVertical: 20,
   },
   modalTitle: {
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
     color: "#FFF",
     marginBottom: 20,
@@ -134,7 +135,7 @@ export default StyleSheet.create({
 
   optionText: {
     color: "white",
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     fontWeight: "500",
   },
   cancelButton: {
@@ -151,7 +152,7 @@ export default StyleSheet.create({
 
   cancelText: {
     color: "#FF4D4D",
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     fontWeight: "500",
   },
   modalOverlay: {
@@ -175,7 +176,7 @@ export default StyleSheet.create({
   },
   userName: {
     color: "white",
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
   },
   modalImage: {
@@ -208,7 +209,7 @@ export default StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "white",
   },
   button: {
@@ -223,7 +224,7 @@ export default StyleSheet.create({
     backgroundColor: "#555",
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     fontWeight: "bold",
     color: "white",
   },

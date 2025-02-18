@@ -27,7 +27,8 @@ import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import ChatListLoader from "@/components/loaders/ChatListLoader";
-import styles from "./groups.styles"
+import styles from "./groups.styles";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default function ContactsScreen() {
   const [groups, setGroups] = useState([]);
@@ -220,7 +221,7 @@ export default function ContactsScreen() {
         <ChatList items={filteredGroups} setSelectedData={setSelectedGroupData} setIsProfileModalVisible={setIsProfileModalVisible} />
       ) : (
         <View style={{ marginLeft: 2, marginTop: 5 }}>
-          <Text style={{ color: "white", fontSize: 15 }}>
+          <Text style={{ color: "white", fontSize: wp("4.1%") }}>
             No groups found. Create a new group!
           </Text>
         </View>

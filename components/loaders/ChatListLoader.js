@@ -1,6 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Skeleton } from "moti/skeleton";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default function ChatListLoader() {
   return (
@@ -40,12 +41,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   chatName: {
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
     color: "white",
   },
   lastMessage: {
-    fontSize: 14,
+    fontSize: wp("3.9%"),
     color: "#888",
   },
   timestampContainer: {
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   timestamp: {
-    fontSize: 12,
+    fontSize: wp("3.3%"),
     color: "#aaa",
     marginTop: 10,
   },
@@ -68,7 +69,7 @@ const styles = StyleSheet.create({
   },
   unreadText: {
     color: "white",
-    fontSize: 12,
+    fontSize: wp("3.3%"),
     fontWeight: "bold",
   },
 });

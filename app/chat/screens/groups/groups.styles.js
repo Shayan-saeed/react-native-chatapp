@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   container: {
@@ -7,7 +8,7 @@ export default StyleSheet.create({
     backgroundColor: "#121212",
   },
   username: {
-    fontSize: 20,
+    fontSize: wp("5.5%"),
     fontWeight: "bold",
     color: "#fff",
   },
@@ -33,7 +34,7 @@ export default StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "white",
   },
   chatItem: {
@@ -77,7 +78,7 @@ export default StyleSheet.create({
     shadowRadius: 3,
   },
   heading: {
-    fontSize: 22,
+    fontSize: wp("6%"),
     fontWeight: "bold",
     color: "white",
     marginBottom: 20,
@@ -115,7 +116,7 @@ export default StyleSheet.create({
     backgroundColor: "#555",
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     fontWeight: "bold",
     color: "white",
   },

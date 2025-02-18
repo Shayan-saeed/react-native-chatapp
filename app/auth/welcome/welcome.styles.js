@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   container: {
@@ -8,20 +9,20 @@ export default StyleSheet.create({
     padding: 20,
   },
   image: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
+    width: wp("42%"),
+    height: hp("19%"),
+    marginBottom: hp("2.5%"),
     tintColor: "#1E90FF",
   },
   heading: {
-    fontSize: 28,
+    fontSize: wp("7.7%"),
     fontWeight: "bold",
     color: "#1E90FF",
     textAlign: "center",
     marginBottom: 10,
   },
   subHeading: {
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "#A9A9A9",
     textAlign: "center",
     marginBottom: 30,
@@ -40,7 +41,7 @@ export default StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
   },
   signInButton: {
@@ -57,7 +58,7 @@ export default StyleSheet.create({
   },
   signInText: {
     color: "#1E90FF",
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
   },
 });

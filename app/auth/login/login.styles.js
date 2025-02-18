@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   container: {
@@ -8,14 +9,14 @@ export default StyleSheet.create({
     padding: 20,
   },
   heading: {
-    fontSize: 28,
+    fontSize: wp("7.7%"),
     fontWeight: "bold",
     color: "#1E90FF",
     textAlign: "center",
     marginBottom: 10,
   },
   subHeading: {
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "#555",
     textAlign: "center",
     marginBottom: 30,
@@ -27,7 +28,7 @@ export default StyleSheet.create({
     borderRadius: 8,
     paddingHorizontal: 15,
     marginBottom: 20,
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "#333",
   },
   button: {
@@ -39,13 +40,13 @@ export default StyleSheet.create({
   },
   buttonText: {
     color: "white",
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
   },
   linkText: {
     textAlign: "center",
     color: "#555",
-    fontSize: 16,
+    fontSize: wp("4.4%"),
   },
   link: {
     color: "#1E90FF",
@@ -66,7 +67,7 @@ export default StyleSheet.create({
   passwordInput: {
     flex: 1,
     height: 50,
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "#333",
   },
 });

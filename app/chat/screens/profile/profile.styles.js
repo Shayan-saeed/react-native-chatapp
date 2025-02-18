@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   container: {
@@ -16,7 +17,7 @@ export default StyleSheet.create({
     backgroundColor: "#1E90FF",
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
     color: "white",
   },
@@ -50,16 +51,16 @@ export default StyleSheet.create({
     marginBottom: 15,
   },
   label: {
-    fontSize: 14,
+    ffontSize: wp("3.9%"),
     color: "#888",
   },
   value: {
-    fontSize: 18,
+    fontSize: wp("5%"),
     color: "white",
     fontWeight: "bold",
   },
   input: {
-    fontSize: 18,
+    fontSize: wp("5%"),
     color: "white",
     fontWeight: "bold",
     borderBottomWidth: 1,
@@ -79,7 +80,7 @@ export default StyleSheet.create({
     justifyContent: "center",
   },
   logoutText: {
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "white",
     marginLeft: 10,
   },

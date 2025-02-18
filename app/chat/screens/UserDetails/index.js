@@ -11,7 +11,8 @@ import { useLocalSearchParams, router } from "expo-router";
 import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
-import styles from "./userdetails.styles"
+import styles from "./userdetails.styles";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 const UserDetails = () => {
   const { id, name, profileImage, chatType } = useLocalSearchParams();
@@ -124,7 +125,7 @@ const UserDetails = () => {
             borderRadius: 10,
           }}
         >
-          <Text style={{ color: "white", fontSize: 17, fontWeight: "bold" }}>
+          <Text style={{ color: "white", fontSize: wp("4.5%"), fontWeight: "bold" }}>
             Group Members
           </Text>
           {loading ? (
@@ -141,7 +142,7 @@ const UserDetails = () => {
                     style={styles.profileImage}
                   />
                   <Text
-                    style={{ color: "white", fontSize: 16, marginLeft: 10 }}
+                    style={{ color: "white", fontSize: wp("4.4%"), marginLeft: 10 }}
                   >
                     {item.name}
                   </Text>

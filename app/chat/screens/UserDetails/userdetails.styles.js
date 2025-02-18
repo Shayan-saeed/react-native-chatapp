@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   container: {
@@ -22,7 +23,7 @@ export default StyleSheet.create({
     borderColor: "#1E90FF",
   },
   userName: {
-    fontSize: 20,
+    fontSize: wp("5.5%"),
     fontWeight: "bold",
     color: "white",
     marginTop: 15,
@@ -45,7 +46,7 @@ export default StyleSheet.create({
   },
   actionText: {
     color: "white",
-    fontSize: 16,
+    fontSize: wp("4.4%"),
   },
   optionRow: {
     flexDirection: "row",
@@ -59,7 +60,7 @@ export default StyleSheet.create({
   },
   optionText: {
     color: "white",
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     marginLeft: 15,
   },
   groupMembersList: {
@@ -69,7 +70,7 @@ export default StyleSheet.create({
   },
   groupMember: {
     color: "white",
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     marginTop: 5,
   },
   groupMembersList: {

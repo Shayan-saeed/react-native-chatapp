@@ -27,7 +27,8 @@ import MainScreenHeader from "@/components/ui/MainScreenHeader";
 import ChatList from "@/components/chat/ChatList";
 import ProfileModal from "@/components/modal/ProfileModal";
 import ChatListLoader from "@/components/loaders/ChatListLoader";
-import styles from "./index.styles"
+import styles from "./index.styles";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default function ChatListScreen() {
   const [users, setUsers] = useState([]);
@@ -229,7 +230,7 @@ export default function ChatListScreen() {
         <ChatList items={filteredUsers} setSelectedData={setSelectedUserData} setIsProfileModalVisible={setIsProfileModalVisible} />
       ) : (
         <View style={{ marginLeft: 2, marginTop: 5 }}>
-          <Text style={{ color: "white", fontSize: 15 }}>
+          <Text style={{ color: "white", fontSize: wp("4.1%") }}>
             No chats found. Start a new chat!
           </Text>
         </View>

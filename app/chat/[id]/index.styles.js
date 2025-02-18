@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   container: {
@@ -20,12 +21,12 @@ export default StyleSheet.create({
   },
   userName: {
     flex: 1,
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
     color: "white",
   },
   timestamp: {
-    fontSize: 12,
+    fontSize: wp("3.3%"),
     color: "#ddd",
   },
   sentMessage: {
@@ -50,7 +51,7 @@ export default StyleSheet.create({
     maxWidth: "70%",
   },
   messageText: {
-    fontSize: 14,
+    fontSize: wp("3.9%"),
     color: "white",
     marginBottom: 2,
   },
@@ -66,7 +67,7 @@ export default StyleSheet.create({
   },
   input: {
     flex: 1,
-    fontSize: 16,
+    fontSize: wp("4.4%"),
     color: "white",
     paddingHorizontal: 10,
   },
@@ -94,7 +95,7 @@ export default StyleSheet.create({
   },
   attachmentText: {
     marginTop: 5,
-    fontSize: 14,
+    fontSize: wp("3.9%"),
     color: "white",
   },
   recordIconContainer: {
@@ -128,6 +129,6 @@ export default StyleSheet.create({
   },
   menuText: {
     color: "white",
-    fontSize: 16,
+    fontSize: wp("4.4%"),
   },
 });

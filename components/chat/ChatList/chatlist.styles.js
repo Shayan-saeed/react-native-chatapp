@@ -1,4 +1,5 @@
 import { StyleSheet } from "react-native";
+import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default StyleSheet.create({
   chatItem: {
@@ -19,12 +20,12 @@ export default StyleSheet.create({
     flex: 1,
   },
   chatName: {
-    fontSize: 18,
+    fontSize: wp("5%"),
     fontWeight: "bold",
     color: "white",
   },
   lastMessage: {
-    fontSize: 14,
+    fontSize: wp("3.9%"),
     color: "#888",
   },
   timestampContainer: {
@@ -33,7 +34,7 @@ export default StyleSheet.create({
     gap: 3,
   },
   timestamp: {
-    fontSize: 12,
+    fontSize: wp("3.3%"),
     color: "#aaa",
     marginTop: 10,
   },
@@ -52,7 +53,7 @@ export default StyleSheet.create({
   },
   unreadText: {
     color: "white",
-    fontSize: 12,
+    fontSize: wp("3.3%"),
     fontWeight: "bold",
   },
 });
