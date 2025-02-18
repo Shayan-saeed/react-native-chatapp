@@ -1,0 +1,135 @@
+// useEffect(() => {
+  //   const markAsRead = async () => {
+  //     try {
+  //       const currentUserID = auth.currentUser.uid;
+  //       const chatUsers = [currentUserID, id].sort();
+  //       const chatID = chatUsers.join("_");
+  //       const chatRef = doc(db, "chats", chatID);
+
+  //       // Fetch the chat document first
+  //       const chatSnap = await getDoc(chatRef);
+
+  //       if (chatSnap.exists()) {
+  //         const chatData = chatSnap.data();
+  //         const updatedUnreadCount = {
+  //           ...chatData.unreadCount,
+  //           [currentUserID]: 0,
+  //         };
+
+  //         // Update the unread count
+  //         await setDoc(
+  //           chatRef,
+  //           { unreadCount: updatedUnreadCount },
+  //           { merge: true }
+  //         );
+  //       }
+  //     } catch (error) {
+  //       console.error("Error marking messages as read:", error);
+  //     }
+  //   };
+
+  //   markAsRead();
+  // }, [id]);
+
+  // const fetchMessages = () => {
+    //   const currentUserID = auth.currentUser.uid;
+    //   const chatUsers = [currentUserID, id].sort();
+    //   const chatID = chatUsers.join("_");
+
+    //   const messagesRef = collection(db, "chats", chatID, "messages");
+    //   const q = query(messagesRef, orderBy("timestamp", "desc"));
+
+    //   return onSnapshot(q, async (snapshot) => {
+    //     setMessages(
+    //       snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+    //     );
+
+    //     const chatRef = doc(db, "chats", chatID);
+    //     const chatSnap = await getDoc(chatRef);
+
+    //     if (chatSnap.exists()) {
+    //       const chatData = chatSnap.data();
+    //       const updatedUnreadCount = {
+    //         ...chatData.unreadCount,
+    //         [currentUserID]: 0,
+    //       };
+
+    //       await setDoc(
+    //         chatRef,
+    //         { unreadCount: updatedUnreadCount },
+    //         { merge: true }
+    //       );
+    //     }
+    //   });
+    // };
+
+    // const unsubscribe = fetchMessages();
+    // return () => unsubscribe();
+
+    <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={snapPoints}
+        enablePanDownToClose={true}
+        animateOnMount={true}
+        onClose={() => setIsSheetOpen(false)}
+        backgroundStyle={styles.bottomSheet}
+      >
+        <BottomSheetView style={styles.sheetContent}>
+          <Text style={styles.modalTitle}>Start a New Chat</Text>
+
+          <View style={styles.inputContainer}>
+            <Ionicons
+              name="mail-outline"
+              size={20}
+              color="#888"
+              style={styles.icon}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Enter email"
+              placeholderTextColor="#888"
+              value={newChatEmail}
+              onChangeText={setNewChatEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[styles.button, StartChatLoading && styles.buttonDisabled]}
+            onPress={handleNewChat}
+            disabled={StartChatLoading}
+          >
+            <Text style={styles.buttonText}>
+              {StartChatLoading ? "Starting..." : "Start Chat"}
+            </Text>
+          </TouchableOpacity>
+          {/* <TouchableOpacity style={styles.optionButton} onPress={handleStartChat}>
+              <Ionicons name="chatbubble-ellipses" size={22} color="white" />
+              <Text style={styles.optionText}>Personal Chat</Text>
+            </TouchableOpacity> */}
+
+          {/* <TouchableOpacity style={styles.optionButton} onPress={handleStartGroupChat}>
+              <Ionicons name="people" size={22} color="white" />
+              <Text style={styles.optionText}>Group Chat</Text>
+            </TouchableOpacity> */}
+
+          {/* <TouchableOpacity
+            style={styles.cancelButton}
+            onPress={toggleBottomSheet}
+          >
+            <Ionicons name="close-circle" size={22} color="#FF4D4D" />
+            <Text style={styles.cancelText}>Cancel</Text>
+          </TouchableOpacity> */}
+        </BottomSheetView>
+      </BottomSheet>
+
+      bottomSheet: {
+    backgroundColor: "#222",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+  },
+  sheetContent: {
+    padding: 25,
+    alignItems: "center",
+  },
