@@ -12,7 +12,10 @@ import styles from "./signup.styles"
 import { useAuth } from "@/hooks/useAuth";
 
 export default function SignupScreen() {
-  const { email, setEmail, password, setPassword, showPassword, setShowPassword, loading, handleSignup } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const { loading, handleSignup } = useAuth();
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState("");
@@ -81,7 +84,7 @@ export default function SignupScreen() {
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={() => handleSignup(name, confirmPassword)}
+        onPress={() => handleSignup(name, confirmPassword, email, password )}
         disabled={loading}
       >
         {loading ? (

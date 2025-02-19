@@ -12,9 +12,11 @@ import styles from "./login.styles";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const { loading, handleLogin } = useAuth();
 
-  const { email, setEmail, password, setPassword, showPassword, setShowPassword, loading, handleLogin } = useAuth();
-  
   return (
     <View style={styles.container}>
       <Text style={styles.heading}>Welcome Back</Text>
@@ -50,7 +52,7 @@ export default function LoginScreen() {
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
+        onPress={handleLogin(email, password )}
         disabled={loading}
       >
         {loading ? (
@@ -66,4 +68,3 @@ export default function LoginScreen() {
     </View>
   );
 }
-

@@ -11,13 +11,10 @@ import { useRouter } from "expo-router";
 import { validateEmail, validatePassword } from "@/utils/validation";
 
 export const useAuth = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
-  const handleLogin = async () => {
+  const handleLogin = async (email, password ) => {
     setLoading(true);
     const trimmedEmail = email.trim().toLowerCase();
     const trimmedPassword = password.trim();
@@ -38,7 +35,7 @@ export const useAuth = () => {
     }
   };
 
-  const handleSignup = async (name, confirmPassword) => {
+  const handleSignup = async (name, confirmPassword, email, password ) => {
     setLoading(true);
     const trimmedName = name.trim();
     const trimmedEmail = email.trim().toLowerCase();
