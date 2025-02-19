@@ -97,12 +97,6 @@ export const useAuth = () => {
   };
 
   return {
-    email,
-    setEmail,
-    password,
-    setPassword,
-    showPassword,
-    setShowPassword,
     loading,
     handleLogin,
     handleSignup,

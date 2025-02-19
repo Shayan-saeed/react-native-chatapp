@@ -1,13 +1,15 @@
 import { Tabs } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
+import { useTheme } from "@/components/theme/ThemeContext";
 
 export default function Layout() {
+  const theme = useTheme();
   return (
     <Tabs
       screenOptions={{
-        tabBarStyle: { backgroundColor: "#222", borderTopWidth: 0 },
+        tabBarStyle: { backgroundColor: theme.searchContainerBG, borderTopWidth: 0 },
         tabBarActiveTintColor: "#1E90FF",
-        tabBarInactiveTintColor: "#bbb",
+        tabBarInactiveTintColor: theme.tabBarInactiveTintColor,
         headerShown: false,
       }}
     >

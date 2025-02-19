@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import styles from "./signup.styles"
+import { useChatStyles }from "./signup.styles"
 import { useAuth } from "@/hooks/useAuth";
 
 export default function SignupScreen() {
@@ -19,6 +19,7 @@ export default function SignupScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [name, setName] = useState("");
+  const styles = useChatStyles();
 
   return (
     <View style={styles.container}>

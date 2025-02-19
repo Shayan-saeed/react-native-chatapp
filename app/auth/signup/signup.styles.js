@@ -1,10 +1,15 @@
 import { StyleSheet } from "react-native";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { useTheme } from "@/components/theme/ThemeContext";
 
-export default StyleSheet.create({
+export const useChatStyles = () => {
+
+  const theme = useTheme();
+
+  return StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: "white",
+      backgroundColor: theme.backgroundColor,
       justifyContent: "center",
       padding: 20,
     },
@@ -17,19 +22,19 @@ export default StyleSheet.create({
     },
     subHeading: {
       fontSize: wp("4.4%"),
-      color: "#555",
+      color: theme.subheadingColor,
       textAlign: "center",
       marginBottom: 30,
     },
     input: {
       height: 50,
-      borderColor: "#ccc",
+      borderColor: theme.borderColor,
       borderWidth: 1,
       borderRadius: 8,
       paddingHorizontal: 15,
       marginBottom: 20,
       fontSize: wp("4.4%"),
-      color: "#333",
+      color: theme.inputColor,
     },
     button: {
       backgroundColor: "#1E90FF",
@@ -45,42 +50,20 @@ export default StyleSheet.create({
     },
     linkText: {
       textAlign: "center",
-      color: "#555",
+      color: theme.subheadingColor,
       fontSize: wp("4.4%"),
     },
     link: {
       color: "#1E90FF",
       fontWeight: "bold",
     },
-    phoneContainer: {
-      width: "100%",
-      height: 70,
-      borderColor: "#ccc",
-      borderWidth: 1,
-      borderRadius: 8,
-      marginBottom: 20,
-      backgroundColor: "white",
-    },
-    phoneTextContainer: {
-      backgroundColor: "transparent",
-      borderRadius: 8,
-      height: 70,
-    },
-    phoneTextInput: {
-      fontSize: wp("4.4%"),
-      color: "#000",
-    },
-    phoneCodeText: {
-      fontSize: wp("4.4%"),
-      color: "#000",
-    },
     buttonDisabled: {
-      backgroundColor: "#555",
+      backgroundColor: theme.subheadingColor,
     },
     passwordContainer: {
       flexDirection: "row",
       alignItems: "center",
-      borderColor: "#ccc",
+      borderColor: theme.borderColor,
       borderWidth: 1,
       borderRadius: 8,
       paddingHorizontal: 15,
@@ -90,6 +73,7 @@ export default StyleSheet.create({
       flex: 1,
       height: 50,
       fontSize: wp("4.4%"),
-      color: "#333",
+      color: theme.inputColor,
     },
   });
+}

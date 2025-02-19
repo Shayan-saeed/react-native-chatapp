@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState} from "react";
 import {
   View,
   TextInput,
@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
-import styles from "./login.styles";
+import {useChatStyles} from "./login.styles";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LoginScreen() {
@@ -16,6 +16,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { loading, handleLogin } = useAuth();
+  const styles = useChatStyles();
 
   return (
     <View style={styles.container}>
@@ -52,7 +53,7 @@ export default function LoginScreen() {
 
       <TouchableOpacity
         style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin(email, password )}
+        onPress={()=> handleLogin(email, password )}
         disabled={loading}
       >
         {loading ? (

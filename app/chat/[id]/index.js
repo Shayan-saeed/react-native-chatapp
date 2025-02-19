@@ -30,9 +30,10 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Audio } from "expo-av";
 import SkeletonMessage from "@/components/loaders/SkeletonMessage";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
-import styles from "./index.styles";
+import {useChatStyles} from "./index.styles";
 import { formatTimestamp } from "@/utils/time";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { useTheme } from "@/components/theme/ThemeContext";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -48,6 +49,9 @@ export default function ChatScreen() {
   const [chatType, setChatType] = useState(null);
   const [chatData, setChatData] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
+  const styles = useChatStyles();
+  const theme = useTheme();
+
   useEffect(() => {
     const fetchChatData = async () => {
       try {
@@ -365,7 +369,7 @@ export default function ChatScreen() {
               }
             }}
           >
-            <Ionicons name="arrow-back" size={24} color="white" />
+            <Ionicons name="arrow-back" size={24} color={theme.textColor} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -407,7 +411,7 @@ export default function ChatScreen() {
                     marginRight: 10,
                   }}
                 />
-                <Text style={{ color: "white", fontSize: wp("4.4%") }}>
+                <Text style={styles.userName}>
                   {chatType === "group" ? chatData?.groupName : userData?.name}
                 </Text>
               </View>
@@ -416,16 +420,16 @@ export default function ChatScreen() {
 
           <View style={{ flexDirection: "row", gap: 15 }}>
             <TouchableOpacity>
-              <Ionicons name="videocam-outline" size={24} color="white" />
+              <Ionicons name="videocam-outline" size={24} color={theme.textColor} />
             </TouchableOpacity>
             <TouchableOpacity>
-              <Ionicons name="call-outline" size={22} color="white" />
+              <Ionicons name="call-outline" size={22} color={theme.textColor}/>
             </TouchableOpacity>
             <View style={{ position: "relative" }}>
               <TouchableOpacity
                 onPress={() => setIsMenuVisible(!isMenuVisible)}
               >
-                <MaterialIcons name="more-vert" size={24} color="white" />
+                <MaterialIcons name="more-vert" size={24} color={theme.textColor} />
               </TouchableOpacity>
               {isMenuVisible && (
                 <View style={[styles.menu]}>
@@ -482,9 +486,9 @@ export default function ChatScreen() {
                         : styles.receivedMessage
                     }
                   >
-                    {chatType === "group" && item.senderName && (
+                    {chatType === "group" && item.senderName && item.sender !== auth.currentUser.uid && (
                       <Text
-                        style={{ color: "#ccc", fontSize: wp("3.3%"), marginBottom: 2 }}
+                        style={{ color: theme.groupMessageSender, fontSize: wp("3.7%"), marginBottom: 2, fontWeight: 700 }}
                       >
                         {item.senderName}
                       </Text>
@@ -593,13 +597,13 @@ export default function ChatScreen() {
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <View style={styles.inputContainer}>
               <TouchableOpacity onPress={toggleAttachmentMenu}>
-                <Ionicons name="attach" size={24} color="#888" />
+                <Ionicons name="attach" size={24} color={theme.textColor} />
               </TouchableOpacity>
 
               <TextInput
                 style={styles.input}
                 placeholder="Type a message"
-                placeholderTextColor="#888"
+                placeholderTextColor={theme.lastMessage}
                 value={newMessage}
                 onChangeText={(text) => {
                   setNewMessage(text);
@@ -618,11 +622,11 @@ export default function ChatScreen() {
                 style={styles.sendOrRecordButton}
               >
                 {newMessage.trim() ? (
-                  <Ionicons name="send" size={24} color="white" />
+                  <Ionicons name="send" size={24} color={theme.textColor} />
                 ) : isRecording ? (
                   <Ionicons name="stop-circle" size={30} color="red" />
                 ) : (
-                  <Ionicons name="mic" size={30} color="white" />
+                  <Ionicons name="mic" size={30} color={theme.textColor} />
                 )}
               </TouchableOpacity>
             </View>

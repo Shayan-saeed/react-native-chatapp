@@ -13,8 +13,8 @@ import { signOut, updateEmail, updateProfile } from "firebase/auth";
 import { auth, db } from "../../../config/firebaseConfig";
 import { useState, useEffect } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import styles from "./profile.styles"
-
+import {useChatStyles} from "./profile.styles"
+import {useTheme} from "@/components/theme/ThemeContext"
 export default function ProfileScreen() {
   const [userData, setUserData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +22,8 @@ export default function ProfileScreen() {
   const [editedEmail, setEditedEmail] = useState("");
   const currentUserID = auth.currentUser.uid;
   const [loading, setLoading] = useState(false);
+  const styles = useChatStyles();
+  const theme = useTheme();
 
   useEffect(() => {
     if (!currentUserID) return;
@@ -165,7 +167,7 @@ export default function ProfileScreen() {
           <Ionicons
             name={isEditing ? "save-outline" : "log-out-outline"}
             size={24}
-            color="white"
+            color={theme.textColor}
           />
         )}
 

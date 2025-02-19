@@ -27,8 +27,9 @@ import MainScreenHeader from "@/components/ui/MainScreenHeader";
 import ChatList from "@/components/chat/ChatList";
 import ProfileModal from "@/components/modal/ProfileModal";
 import ChatListLoader from "@/components/loaders/ChatListLoader";
-import styles from "./index.styles";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { useChatStyles } from "./index.styles";
+import { useTheme } from "@/components/theme/ThemeContext";
 
 export default function ChatListScreen() {
   const [users, setUsers] = useState([]);
@@ -39,8 +40,9 @@ export default function ChatListScreen() {
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [selectedUserData, setSelectedUserData] = useState(null);
   const [newChatEmail, setNewChatEmail] = useState("");
-
   const [visible, setVisible] = useState(false);
+  const styles = useChatStyles();
+  const theme = useTheme();
 
   useEffect(() => {
     const fetchUsers = () => {
@@ -213,13 +215,13 @@ export default function ChatListScreen() {
         <Ionicons
           name="search-outline"
           size={20}
-          color="#888"
+          color={theme.lastMessage}
           style={styles.searchIcon}
         />
         <TextInput
           style={styles.searchInput}
           placeholder="Search..."
-          placeholderTextColor="#888"
+          placeholderTextColor={theme.lastMessage}
           value={search}
           onChangeText={handleSearch}
         />
@@ -230,7 +232,7 @@ export default function ChatListScreen() {
         <ChatList items={filteredUsers} setSelectedData={setSelectedUserData} setIsProfileModalVisible={setIsProfileModalVisible} />
       ) : (
         <View style={{ marginLeft: 2, marginTop: 5 }}>
-          <Text style={{ color: "white", fontSize: wp("4.1%") }}>
+          <Text style={{ color: theme.textColor, fontSize: wp("4.1%") }}>
             No chats found. Start a new chat!
           </Text>
         </View>
@@ -267,13 +269,13 @@ export default function ChatListScreen() {
           <Ionicons
             name="mail-outline"
             size={20}
-            color="#888"
+            color={theme.lastMessage}
             style={styles.icon}
           />
           <TextInput
             style={styles.input}
             placeholder="Enter email"
-            placeholderTextColor="#888"
+            placeholderTextColor={theme.lastMessage}
             value={newChatEmail}
             onChangeText={setNewChatEmail}
             keyboardType="email-address"

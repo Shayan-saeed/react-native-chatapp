@@ -27,7 +27,7 @@ import {
   GestureHandlerRootView,
 } from "react-native-gesture-handler";
 import ChatListLoader from "@/components/loaders/ChatListLoader";
-import styles from "./groups.styles";
+import {useChatStyles} from "./groups.styles";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
 
 export default function ContactsScreen() {
@@ -43,6 +43,7 @@ export default function ContactsScreen() {
   const [isProfileModalVisible, setIsProfileModalVisible] = useState(false);
   const [selectedGroupData, setSelectedGroupData] = useState(null);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  const styles = useChatStyles();
 
   const handleOpen = () => {
     setVisible(true);

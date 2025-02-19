@@ -11,14 +11,17 @@ import { useLocalSearchParams, router } from "expo-router";
 import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
-import styles from "./userdetails.styles";
+import {useChatStyles} from "./userdetails.styles";
 import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import { useTheme } from "@/components/theme/ThemeContext";
 
 const UserDetails = () => {
   const { id, name, profileImage, chatType } = useLocalSearchParams();
   const [groupMembers, setGroupMembers] = useState([]);
   const [groupMembersWithNames, setGroupMembersWithNames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const styles = useChatStyles();
+  const theme = useTheme();
 
   useEffect(() => {
     if (chatType === "group") {
@@ -70,9 +73,9 @@ const UserDetails = () => {
     }
   }, [groupMembers]);
 
-  const renderGroupMembers = ({ item }) => (
-    <Text style={styles.groupMember}>{item}</Text>
-  );
+  // const renderGroupMembers = ({ item }) => (
+  //   <Text style={styles.groupMember}>{item}</Text>
+  // );
 
   return (
     <View style={styles.container}>
@@ -80,7 +83,7 @@ const UserDetails = () => {
         style={styles.backButton}
         onPress={() => router.push(`/chat/${id}`)}
       >
-        <Ionicons name="arrow-back" size={24} color="white" />
+        <Ionicons name="arrow-back" size={24} color={theme.textColor} />
       </TouchableOpacity>
 
       <Image
@@ -99,17 +102,17 @@ const UserDetails = () => {
 
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="call" size={24} color="white" />
+          <Ionicons name="call" size={24} color={theme.textColor} />
           <Text style={styles.actionText}>Audio</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="videocam" size={24} color="white" />
+          <Ionicons name="videocam" size={24} color={theme.textColor} />
           <Text style={styles.actionText}>Video</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="search" size={24} color="white" />
+          <Ionicons name="search" size={24} color={theme.textColor} />
           <Text style={styles.actionText}>Search</Text>
         </TouchableOpacity>
       </View>
@@ -120,12 +123,12 @@ const UserDetails = () => {
             flex: 1,
             width: "100%",
             marginVertical: 20,
-            backgroundColor: "#222",
+            backgroundColor: theme.searchContainerBG,
             padding: 10,
             borderRadius: 10,
           }}
         >
-          <Text style={{ color: "white", fontSize: wp("4.5%"), fontWeight: "bold" }}>
+          <Text style={{ color: theme.textColor, fontSize: wp("4.5%"), fontWeight: "bold" }}>
             Group Members
           </Text>
           {loading ? (
@@ -142,7 +145,7 @@ const UserDetails = () => {
                     style={styles.profileImage}
                   />
                   <Text
-                    style={{ color: "white", fontSize: wp("4.4%"), marginLeft: 10 }}
+                    style={{ color: theme.textColor, fontSize: wp("4.4%"), marginLeft: 10 }}
                   >
                     {item.name}
                   </Text>

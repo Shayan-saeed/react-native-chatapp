@@ -7,14 +7,16 @@ import {
   Image,
 } from "react-native";
 import { router } from "expo-router";
-import styles from "./chatlist.styles";
 import { formatTimestamp } from "@/utils/time";
+import { useChatStyles } from "./chatlist.styles";
 
 export default function ChatList({
   items,
   setSelectedData,
   setIsProfileModalVisible,
 }) {
+
+  const styles = useChatStyles();
 
   return (
       <FlatList

@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import styles from "./profilemodal.styles"
+import {useChatStyles} from "./profilemodal.styles"
 
 export default function ProfileModal({
   isProfileModalVisible,
@@ -20,6 +20,7 @@ export default function ProfileModal({
   setIsProfileModalVisible,
 }) {
   const [showModal, setShowModal] = useState(false);
+  const styles = useChatStyles();
 
   const closeModal = () => {
     setIsProfileModalVisible(false);

@@ -1,8 +1,10 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Skeleton } from "moti/skeleton";
+import {useTheme} from "@/components/theme/ThemeContext";
 
 export default function SkeletonMessage({ isSender = false }) {
+  const theme = useTheme();
   return (
     <View
       style={[
@@ -14,7 +16,7 @@ export default function SkeletonMessage({ isSender = false }) {
         width={150 + Math.random() * 50} 
         height={20}
         radius={10}
-        colorMode="dark"
+        colorMode={theme.colorMode}
       />
     </View>
   );
