@@ -9,6 +9,7 @@ import {
 import { collection, doc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { useRouter } from "expo-router";
 import { validateEmail, validatePassword } from "@/utils/validation";
+import { saveToken } from '@/utils/authStorage';
 
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
@@ -26,7 +27,9 @@ export const useAuth = () => {
     }
 
     try {
-      await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
+      const userCredential = await signInWithEmailAndPassword(auth, trimmedEmail, trimmedPassword);
+      const token = await userCredential.user.getIdToken();
+      await saveToken(token);
       router.replace("/chat");
     } catch (error) {
       Alert.alert("Login Failed", error.message);

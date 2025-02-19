@@ -13,8 +13,10 @@ import { signOut, updateEmail, updateProfile } from "firebase/auth";
 import { auth, db } from "../../../config/firebaseConfig";
 import { useState, useEffect } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import {useChatStyles} from "./profile.styles"
-import {useTheme} from "@/components/theme/ThemeContext"
+import {useChatStyles} from "./profile.styles";
+import {useTheme} from "@/components/theme/ThemeContext";
+import { removeToken } from "@/utils/authStorage";
+
 export default function ProfileScreen() {
   const [userData, setUserData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -51,6 +53,7 @@ export default function ProfileScreen() {
     setLoading(true);
     try {
       await signOut(auth);
+      await removeToken();
       setLoading(false);
       router.replace("/auth/login");
     } catch (error) {

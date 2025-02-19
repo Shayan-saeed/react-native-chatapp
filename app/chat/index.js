@@ -1,11 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Alert
-} from "react-native";
+import { View, Text, TouchableOpacity, TextInput, Alert, BackHandler } from "react-native";
 import {
   collection,
   getDocs,
@@ -19,15 +13,16 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../config/firebaseConfig";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import {
-  GestureHandlerRootView,
-} from "react-native-gesture-handler";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Backdrop } from "react-native-backdrop";
 import MainScreenHeader from "@/components/ui/MainScreenHeader";
 import ChatList from "@/components/chat/ChatList";
 import ProfileModal from "@/components/modal/ProfileModal";
 import ChatListLoader from "@/components/loaders/ChatListLoader";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+import {
+  widthPercentageToDP as wp,
+  heightPercentageToDP as hp,
+} from "react-native-responsive-screen";
 import { useChatStyles } from "./index.styles";
 import { useTheme } from "@/components/theme/ThemeContext";
 
@@ -44,6 +39,24 @@ export default function ChatListScreen() {
   const styles = useChatStyles();
   const theme = useTheme();
 
+  useEffect(() => {
+    const backAction = () => {
+      Alert.alert("Exit App", "Are you sure you want to exit?", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Exit", onPress: () => BackHandler.exitApp() },
+      ]);
+      return true; // Prevent default back action
+    };
+
+    // Add event listener for back button
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove(); // Cleanup event listener
+  }, []);
+  
   useEffect(() => {
     const fetchUsers = () => {
       const currentUserID = auth.currentUser.uid;
@@ -228,8 +241,12 @@ export default function ChatListScreen() {
       </View>
       {loading ? (
         <ChatListLoader />
-      ) : users.length > 0 ? ( 
-        <ChatList items={filteredUsers} setSelectedData={setSelectedUserData} setIsProfileModalVisible={setIsProfileModalVisible} />
+      ) : users.length > 0 ? (
+        <ChatList
+          items={filteredUsers}
+          setSelectedData={setSelectedUserData}
+          setIsProfileModalVisible={setIsProfileModalVisible}
+        />
       ) : (
         <View style={{ marginLeft: 2, marginTop: 5 }}>
           <Text style={{ color: theme.textColor, fontSize: wp("4.1%") }}>
@@ -238,7 +255,11 @@ export default function ChatListScreen() {
         </View>
       )}
 
-      <ProfileModal isProfileModalVisible={isProfileModalVisible} selectedData={selectedUserData} setIsProfileModalVisible={setIsProfileModalVisible} />
+      <ProfileModal
+        isProfileModalVisible={isProfileModalVisible}
+        selectedData={selectedUserData}
+        setIsProfileModalVisible={setIsProfileModalVisible}
+      />
 
       <TouchableOpacity
         style={styles.floatingButton}
@@ -296,4 +317,3 @@ export default function ChatListScreen() {
     </GestureHandlerRootView>
   );
 }
-
