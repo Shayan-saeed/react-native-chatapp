@@ -92,6 +92,14 @@ export const useChatStyles = () => {
       height: responsive.height(42),
       borderRadius: 20,
     },
+    editIcon: {
+      position: "absolute",
+      bottom: 0,
+      right: 0,
+      backgroundColor: "#1E90FF",
+      borderRadius: 15,
+      padding: 5,
+    },
   });
   
 }

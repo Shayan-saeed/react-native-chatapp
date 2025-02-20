@@ -166,9 +166,13 @@ export default function ProfileScreen() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        setIsEditing(false);
-        router.push("/chat");
-        return true;
+        if (isEditing) {
+          setIsEditing(false);
+          return true;
+        } else {
+          router.push("/chat");
+          return true;
+        }
       };
 
       const backHandler = BackHandler.addEventListener(

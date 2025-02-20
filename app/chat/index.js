@@ -56,7 +56,6 @@ export default function ChatListScreen() {
       return () => backHandler.remove();
     }, [])
   );
-  
   useEffect(() => {
     const fetchUsers = () => {
       const currentUserID = auth.currentUser.uid;
@@ -220,7 +219,7 @@ export default function ChatListScreen() {
   const handleClose = () => {
     setVisible(false);
   };
-
+  
   return (
     <GestureHandlerRootView style={styles.container}>
       <MainScreenHeader />
@@ -268,7 +267,7 @@ export default function ChatListScreen() {
         <MaterialIcons name="add-comment" size={30} color="white" />
       </TouchableOpacity>
 
-      <Backdrop
+        <Backdrop
         visible={visible}
         handleOpen={handleOpen}
         handleClose={handleClose}
@@ -317,3 +316,4 @@ export default function ChatListScreen() {
     </GestureHandlerRootView>
   );
 }
+

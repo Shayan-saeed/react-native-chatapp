@@ -145,6 +145,7 @@ export default function ContactsScreen() {
       const groupChatRef = await addDoc(collection(db, "chats"), {
         type: "group",
         groupName,
+        groupImage: "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg",
         users: groupUsers,
         lastMessage: "",
         lastMessageTimestamp: Timestamp.now(),

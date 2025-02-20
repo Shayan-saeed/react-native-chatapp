@@ -6,7 +6,9 @@ import {
   TouchableOpacity,
   FlatList,
   BackHandler,
+  ActivityIndicator,
 } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { Ionicons, MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, router } from "expo-router";
 import { getDoc, doc, arrayRemove, updateDoc } from "firebase/firestore";
@@ -14,15 +16,16 @@ import { db, auth } from "../../../config/firebaseConfig";
 import { useFocusEffect } from "@react-navigation/native";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
 import { useChatStyles } from "./userdetails.styles";
-
 import { useTheme } from "@/components/theme/ThemeContext";
 import responsive from "@/utils/responsive";
 
 const UserDetails = () => {
   const { id, name, profileImage, chatType } = useLocalSearchParams();
   const [groupMembers, setGroupMembers] = useState([]);
+  const [groupImage, setGroupImage] = useState(null);
   const [groupMembersWithNames, setGroupMembersWithNames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
   const styles = useChatStyles();
   const theme = useTheme();
 
@@ -37,6 +40,7 @@ const UserDetails = () => {
           if (groupDoc.exists()) {
             const groupData = groupDoc.data();
             setGroupMembers(groupData.users);
+            setGroupImage(groupData.groupImage);
           }
         } catch (error) {
           console.error("Error fetching group details:", error);
@@ -46,13 +50,67 @@ const UserDetails = () => {
     }
   }, [chatType, id]);
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      uploadToCloudinary(result.assets[0].uri);
+    }
+  };
+
+  const uploadToCloudinary = async (imageUri) => {
+    try {
+      setUploading(true);
+      let formData = new FormData();
+      formData.append("file", { uri: imageUri, type: "image/jpeg", name: "group.jpg" });
+      formData.append("upload_preset", "user_uploads"); 
+
+      const response = await fetch("https://api.cloudinary.com/v1_1/dir9vradu/image/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (data.secure_url) {
+        updateGroupImage(data.secure_url);
+      }
+    } catch (error) {
+      console.error("Upload failed:", error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const updateGroupImage = async (url) => {
+    try {
+      const groupRef = doc(db, "chats", id);
+      const groupDoc = await getDoc(groupRef);
+  
+      if (groupDoc.exists()) {
+        await updateDoc(groupRef, {
+          groupImage: url, 
+        });
+        setGroupImage(url);
+      } else {
+        console.error("Group document does not exist.");
+      }
+    } catch (error) {
+      console.error("Error updating group image:", error);
+    }
+  };
+  
   const fetchUserNames = async () => {
     try {
       const usersData = await Promise.all(
         groupMembers.map(async (userID) => {
           const userDoc = await getDoc(doc(db, "users", userID));
           if (userDoc.exists()) {
-            return { id: userID, name: userDoc.data().name };
+            return { id: userID, name: userDoc.data().name, profileImage: userDoc.data().profileImage };
           }
           return null;
         })
@@ -126,15 +184,21 @@ const UserDetails = () => {
         <Ionicons name="arrow-back" size={24} color={theme.textColor} />
       </TouchableOpacity>
 
-      <Image
-        source={{
-          uri:
-            chatType === "group"
-              ? "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg"
-              : profileImage,
-        }}
-        style={styles.groupImage}
-      />
+      <View>
+        <Image
+          source={{ uri: chatType === "group" ? groupImage || "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg" : profileImage }}
+          style={styles.groupImage}
+        />
+        {chatType === "group" && (
+          <TouchableOpacity onPress={pickImage} style={styles.editIcon}>
+            {uploading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <MaterialIcons name="photo-camera" size={20} color="#fff" />
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
 
       <Text style={styles.userName}>
         {chatType === "group" ? name : name || "Unknown User"}
@@ -189,7 +253,7 @@ const UserDetails = () => {
                 <View style={styles.groupMemberItem}>
                   <Image
                     source={{
-                      uri: "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
+                      uri: item?.profileImage || "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
                     }}
                     style={styles.profileImage}
                   />

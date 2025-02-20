@@ -408,7 +408,7 @@ export default function ChatScreen() {
                       ? chatData?.groupName || "Unknown Group"
                       : userData?.name || "Unknown User",
                   profileImage:
-                    userData?.profileImage ||
+                    userData?.profileImage || chatData?.groupImage ||
                     "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
                   chatType: chatType,
                 },
@@ -423,7 +423,7 @@ export default function ChatScreen() {
                   source={{
                     uri:
                       chatType === "group"
-                        ? "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg"
+                        ? chatData?.groupImage || "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg"
                         : userData?.profileImage ||
                           "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
                   }}

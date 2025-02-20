@@ -36,10 +36,8 @@ export default function ChatList({
             >
               <Image
                 source={{
-                  uri:
-                    item.profileImage ||
-                    "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg",
-                }}
+                  uri: item.profileImage || item.groupImage || "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg",
+                }}                
                 style={styles.profileImage}
               />
             </TouchableOpacity>

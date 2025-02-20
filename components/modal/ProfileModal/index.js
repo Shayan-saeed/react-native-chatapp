@@ -47,7 +47,7 @@ export default function ProfileModal({
                 <ImageBackground
                   source={{
                     uri:
-                      selectedData.profileImage ||
+                      selectedData.profileImage || selectedData.groupImage ||
                       "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg",
                   }}
                   style={styles.modalImage}
