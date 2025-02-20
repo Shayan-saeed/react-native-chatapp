@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
   Image,
   TouchableOpacity,
   FlatList,
+  BackHandler,
 } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, router } from "expo-router";
 import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
+import { useFocusEffect } from "@react-navigation/native";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
 import {useChatStyles} from "./userdetails.styles";
 
@@ -73,6 +75,22 @@ const UserDetails = () => {
       fetchUserNames();
     }
   }, [groupMembers]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        router.push(`/chat/${id}`); 
+        return true; 
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      return () => backHandler.remove(); 
+    }, [id])
+  );
 
   // const renderGroupMembers = ({ item }) => (
   //   <Text style={styles.groupMember}>{item}</Text>

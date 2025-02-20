@@ -11,6 +11,7 @@ import {
   Alert,
   Animated,
   TouchableWithoutFeedback,
+  BackHandler
 } from "react-native";
 import {
   doc,
@@ -30,7 +31,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { Audio } from "expo-av";
 import SkeletonMessage from "@/components/loaders/SkeletonMessage";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
-import {useChatStyles} from "./index.styles";
+import { useChatStyles } from "./index.styles";
 import { formatTimestamp } from "@/utils/time";
 
 import { useTheme } from "@/components/theme/ThemeContext";
@@ -204,6 +205,27 @@ export default function ChatScreen() {
       }).start();
     }
   }, [isMenuVisible]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        if (chatType === "group") {
+          router.push("/chat/screens/groups"); 
+        } else {
+          router.push("/chat"); 
+        }
+        return true; 
+      };
+  
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+  
+      return () => backHandler.remove(); 
+    }, [chatType])
+  );
+  
 
   // const clearChat = async () => {
   //   try {
@@ -421,16 +443,24 @@ export default function ChatScreen() {
 
           <View style={{ flexDirection: "row", gap: 15 }}>
             <TouchableOpacity>
-              <Ionicons name="videocam-outline" size={24} color={theme.textColor} />
+              <Ionicons
+                name="videocam-outline"
+                size={24}
+                color={theme.textColor}
+              />
             </TouchableOpacity>
             <TouchableOpacity>
-              <Ionicons name="call-outline" size={22} color={theme.textColor}/>
+              <Ionicons name="call-outline" size={22} color={theme.textColor} />
             </TouchableOpacity>
             <View style={{ position: "relative" }}>
               <TouchableOpacity
                 onPress={() => setIsMenuVisible(!isMenuVisible)}
               >
-                <MaterialIcons name="more-vert" size={24} color={theme.textColor} />
+                <MaterialIcons
+                  name="more-vert"
+                  size={24}
+                  color={theme.textColor}
+                />
               </TouchableOpacity>
               {isMenuVisible && (
                 <View style={[styles.menu]}>
@@ -487,21 +517,34 @@ export default function ChatScreen() {
                         : styles.receivedMessage
                     }
                   >
-                    {chatType === "group" && item.senderName && item.sender !== auth.currentUser.uid && (
-                      <Text
-                        style={{ color: theme.groupMessageSender, fontSize: responsive.fontSize(14), marginBottom: responsive.height(2), fontWeight: 700 }}
-                      >
-                        {item.senderName}
-                      </Text>
-                    )}
+                    {chatType === "group" &&
+                      item.senderName &&
+                      item.sender !== auth.currentUser.uid && (
+                        <Text
+                          style={{
+                            color: theme.groupMessageSender,
+                            fontSize: responsive.fontSize(14),
+                            marginBottom: responsive.height(2),
+                            fontWeight: 700,
+                          }}
+                        >
+                          {item.senderName}
+                        </Text>
+                      )}
                     <Text style={styles.messageText}>{item.text}</Text>
                   </View>
                   <Text
                     style={[
                       styles.timestamp,
                       item.sender === auth.currentUser.uid
-                        ? { alignSelf: "flex-end", marginRight: responsive.width(15) }
-                        : { alignSelf: "flex-start", marginLeft: responsive.width(15) },
+                        ? {
+                            alignSelf: "flex-end",
+                            marginRight: responsive.width(15),
+                          }
+                        : {
+                            alignSelf: "flex-start",
+                            marginLeft: responsive.width(15),
+                          },
                     ]}
                   >
                     {formatTimestamp(item.timestamp)}
@@ -637,4 +680,3 @@ export default function ChatScreen() {
     </TouchableWithoutFeedback>
   );
 }
-

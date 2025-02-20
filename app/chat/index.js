@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,useCallback } from "react";
 import { View, Text, TouchableOpacity, TextInput, Alert, BackHandler } from "react-native";
 import {
   collection,
@@ -19,6 +19,7 @@ import MainScreenHeader from "@/components/ui/MainScreenHeader";
 import ChatList from "@/components/chat/ChatList";
 import ProfileModal from "@/components/modal/ProfileModal";
 import ChatListLoader from "@/components/loaders/ChatListLoader";
+import { useFocusEffect } from "@react-navigation/native";
 
 import { useChatStyles } from "./index.styles";
 import { useTheme } from "@/components/theme/ThemeContext";
@@ -37,23 +38,24 @@ export default function ChatListScreen() {
   const styles = useChatStyles();
   const theme = useTheme();
 
-  useEffect(() => {
-    const backAction = () => {
-      Alert.alert("Exit App", "Are you sure you want to exit?", [
-        { text: "Cancel", style: "cancel" },
-        { text: "Exit", onPress: () => BackHandler.exitApp() },
-      ]);
-      return true; // Prevent default back action
-    };
+  useFocusEffect(
+    useCallback(() => {
+      const backAction = () => {
+        Alert.alert("Exit App", "Are you sure you want to exit?", [
+          { text: "Cancel", style: "cancel" },
+          { text: "Exit", onPress: () => BackHandler.exitApp() },
+        ]);
+        return true; 
+      };
 
-    // Add event listener for back button
-    const backHandler = BackHandler.addEventListener(
-      "hardwareBackPress",
-      backAction
-    );
-
-    return () => backHandler.remove(); // Cleanup event listener
-  }, []);
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        backAction
+      );
+  
+      return () => backHandler.remove();
+    }, [])
+  );
   
   useEffect(() => {
     const fetchUsers = () => {

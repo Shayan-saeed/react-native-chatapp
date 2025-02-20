@@ -6,17 +6,18 @@ import {
   TextInput,
   Alert,
   ActivityIndicator,
+  BackHandler,
 } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { signOut, updateEmail, updateProfile } from "firebase/auth";
 import { auth, db } from "../../../config/firebaseConfig";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import {useChatStyles} from "./profile.styles";
-import {useTheme} from "@/components/theme/ThemeContext";
+import { useChatStyles } from "./profile.styles";
+import { useTheme } from "@/components/theme/ThemeContext";
 import { removeToken } from "@/utils/authStorage";
-
+import { useFocusEffect } from "@react-navigation/native";
 export default function ProfileScreen() {
   const [userData, setUserData] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -106,10 +107,27 @@ export default function ProfileScreen() {
     }
   };
 
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        setIsEditing(false);
+        router.push("/chat");
+        return true;
+      };
+
+      const backHandler = BackHandler.addEventListener(
+        "hardwareBackPress",
+        onBackPress
+      );
+
+      return () => backHandler.remove();
+    })
+  );
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => {router.back(), setIsEditing(false);}}>
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
@@ -181,4 +199,3 @@ export default function ProfileScreen() {
     </View>
   );
 }
-
