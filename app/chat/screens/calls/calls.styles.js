@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 export const useChatStyles = () => {
   const theme = useTheme();
@@ -14,7 +15,7 @@ export const useChatStyles = () => {
     },
     screenText: {
       color: theme.textColor,
-      fontSize: wp("5%"),
+      fontSize: responsive.fontSize(18),
     },
   });
 }

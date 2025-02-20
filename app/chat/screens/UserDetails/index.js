@@ -12,8 +12,9 @@ import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
 import {useChatStyles} from "./userdetails.styles";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 const UserDetails = () => {
   const { id, name, profileImage, chatType } = useLocalSearchParams();
@@ -122,13 +123,13 @@ const UserDetails = () => {
           style={{
             flex: 1,
             width: "100%",
-            marginVertical: 20,
+            marginVertical: responsive.height(20),
             backgroundColor: theme.searchContainerBG,
             padding: 10,
             borderRadius: 10,
           }}
         >
-          <Text style={{ color: theme.textColor, fontSize: wp("4.5%"), fontWeight: "bold" }}>
+          <Text style={{ color: theme.textColor, fontSize: responsive.fontSize(17), fontWeight: "bold" }}>
             Group Members
           </Text>
           {loading ? (
@@ -145,7 +146,7 @@ const UserDetails = () => {
                     style={styles.profileImage}
                   />
                   <Text
-                    style={{ color: theme.textColor, fontSize: wp("4.4%"), marginLeft: 10 }}
+                    style={{ color: theme.textColor, fontSize: responsive.fontSize(16), marginLeft: responsive.width(10) }}
                   >
                     {item.name}
                   </Text>

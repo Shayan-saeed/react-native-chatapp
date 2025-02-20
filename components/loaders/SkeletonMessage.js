@@ -2,6 +2,7 @@ import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Skeleton } from "moti/skeleton";
 import {useTheme} from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 export default function SkeletonMessage({ isSender = false }) {
   const theme = useTheme();
@@ -13,8 +14,8 @@ export default function SkeletonMessage({ isSender = false }) {
       ]}
     >
       <Skeleton
-        width={150 + Math.random() * 50} 
-        height={20}
+        width={responsive.width(82)} 
+        height={responsive.height(22)}
         radius={10}
         colorMode={theme.colorMode}
       />
@@ -29,15 +30,15 @@ const styles = StyleSheet.create({
   },
   senderContainer: {
     alignSelf: "flex-end",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: responsive.width(12),
+    paddingVertical: responsive.height(6),
     borderTopRightRadius: 0,
     color: "#333",
   },
   receiverContainer: {
     alignSelf: "flex-start",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: responsive.width(12),
+    paddingVertical: responsive.height(6),
     borderTopLeftRadius: 0,
     color: "#333",
   },

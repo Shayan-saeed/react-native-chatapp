@@ -1,9 +1,7 @@
 import { StyleSheet } from "react-native";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 export const useChatStyles = () => {
   const theme = useTheme();
@@ -12,27 +10,27 @@ export const useChatStyles = () => {
     chatItem: {
       flexDirection: "row",
       alignItems: "center",
-      paddingVertical: 12,
-      paddingHorizontal: 10,
+      paddingVertical: responsive.height(12),
+      paddingHorizontal: responsive.width(10),
       borderBottomWidth: 1,
       borderBottomColor: theme.borderBottomColor,
     },
     profileImage: {
       width: 50,
-      height: 50,
+      height: responsive.height(52),
       borderRadius: 25,
-      marginRight: 12,
+      marginRight: responsive.width(12),
     },
     chatTextContainer: {
       flex: 1,
     },
     chatName: {
-      fontSize: wp("5%"),
+      fontSize: responsive.fontSize(18),
       fontWeight: "bold",
       color: theme.textColor,
     },
     lastMessage: {
-      fontSize: wp("3.9%"),
+      fontSize: responsive.fontSize(14),
       color: "#888",
     },
     timestampContainer: {
@@ -41,9 +39,9 @@ export const useChatStyles = () => {
       gap: 3,
     },
     timestamp: {
-      fontSize: wp("3.3%"),
+      fontSize: responsive.fontSize(12),
       color: theme.lastMessage,
-      marginTop: 10,
+      marginTop: responsive.height(10),
     },
     timestampContainer: {
       flexDirection: "column",
@@ -53,14 +51,14 @@ export const useChatStyles = () => {
     unreadBadge: {
       backgroundColor: "red",
       borderRadius: 12,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
+      paddingHorizontal: responsive.width(6),
+      paddingVertical: responsive.height(2),
       alignItems: "center",
       justifyContent: "center",
     },
     unreadText: {
       color: "white",
-      fontSize: wp("3.3%"),
+      fontSize: responsive.fontSize(12),
       fontWeight: "bold",
     },
   });

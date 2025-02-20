@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 export const useChatStyles = () => {
   const theme = useTheme();
@@ -19,38 +20,38 @@ export const useChatStyles = () => {
       padding: 10,
     },
     groupImage: {
-      width: 120,
-      height: 120,
+      width: responsive.width(120),
+      height: responsive.height(120),
       borderRadius: 60,
-      marginTop: 60,
+      marginTop: responsive.height(60),
       borderWidth: 2,
       borderColor: "#1E90FF",
     },
     userName: {
-      fontSize: wp("5.5%"),
+      fontSize: responsive.fontSize(20),
       fontWeight: "bold",
       color: theme.textColor,
-      marginTop: 15,
+      marginTop: responsive.height(15),
     },
     actionRow: {
       flexDirection: "row",
       justifyContent: "center",
-      marginTop: 30,
+      marginTop: responsive.height(30),
       width: "80%",
     },
     actionButton: {
       alignItems: "center",
       backgroundColor: theme.borderBottomColor,
-      paddingVertical: 7,
-      paddingHorizontal: 10,
+      paddingVertical: responsive.height(7),
+      paddingHorizontal: responsive.width(10),
       borderRadius: 12,
       flexDirection: "row",
       gap: 5,
-      marginRight: 10,
+      marginRight: responsive.width(10),
     },
     actionText: {
       color: theme.textColor,
-      fontSize: wp("4.4%"),
+      fontSize: responsive.fontSize(16),
     },
     optionRow: {
       flexDirection: "row",
@@ -58,27 +59,27 @@ export const useChatStyles = () => {
       backgroundColor: theme.searchContainerBG,
       padding: 15,
       width: "100%",
-      marginTop: 15,
+      marginTop: responsive.height(15),
       borderRadius: 10,
-      paddingLeft: 20,
+      paddingLeft: responsive.width(20),
     },
     optionText: {
       color: theme.textColor,
-      fontSize: wp("4.4%"),
-      marginLeft: 15,
+      fontSize: responsive.fontSize(16),
+      marginLeft: responsive.width(15),
     },
     groupMembersList: {
-      marginTop: 10,
+      marginTop: responsive.height(10),
       width: "100%",
-      marginBottom: 20,
+      marginBottom: responsive.height(20),
     },
     groupMember: {
       color: "white",
-      fontSize: wp("4.4%"),
-      marginTop: 5,
+      fontSize: responsive.fontSize(16),
+      marginTop: responsive.height(5),
     },
     groupMembersList: {
-      marginTop: 10,
+      marginTop: responsive.height(10),
       width: "100%",
     },
     groupMemberItem: {
@@ -87,8 +88,8 @@ export const useChatStyles = () => {
       padding: 10,
     },
     profileImage: {
-      width: 40,
-      height: 40,
+      width: responsive.width(42),
+      height: responsive.height(42),
       borderRadius: 20,
     },
   });

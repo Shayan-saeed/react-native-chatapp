@@ -2,8 +2,9 @@ import React from "react";
 import { Text, View, TouchableOpacity, StyleSheet } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { router } from "expo-router";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 
 export default function MainScreenHeader() {
@@ -23,11 +24,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingVertical: responsive.height(10),
     borderBottomWidth: 1,
   },
   username: {
-    fontSize: wp("5.5%"),
+    fontSize: responsive.fontSize(20),
     fontWeight: "bold",
   },
 });

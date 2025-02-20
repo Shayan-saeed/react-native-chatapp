@@ -1,6 +1,7 @@
 import { StyleSheet } from "react-native";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 export const useChatStyles = () => {
   const theme = useTheme();
@@ -20,21 +21,21 @@ export const useChatStyles = () => {
     },
     modalHeader: {
       backgroundColor: "rgba(0, 0, 0, 0.6)",
-      paddingVertical: 8,
+      paddingVertical: responsive.height(8),
       alignItems: "left",
       justifyContent: "center",
-      paddingLeft: 10,
+      paddingLeft: responsive.width(10),
     },
     modalImage: {
       width: "100%",
-      height: 275,
+      height: responsive.height(277),
       resizeMode: "cover",
     },
     iconsRow: {
       flexDirection: "row",
       backgroundColor: theme.backgroundColor,
       justifyContent: "space-around",
-      paddingVertical: 15,
+      paddingVertical: responsive.height(12),
     },
     iconButton: {
       justifyContent: "center",
@@ -42,7 +43,7 @@ export const useChatStyles = () => {
     },
     userName: {
       color: "white",
-      fontSize: wp("5%"),
+      fontSize: responsive.fontSize(18),
       fontWeight: "bold",
     },
   });

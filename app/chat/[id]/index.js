@@ -32,8 +32,9 @@ import SkeletonMessage from "@/components/loaders/SkeletonMessage";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
 import {useChatStyles} from "./index.styles";
 import { formatTimestamp } from "@/utils/time";
-import { widthPercentageToDP as wp, heightPercentageToDP as hp } from 'react-native-responsive-screen';
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -405,10 +406,10 @@ export default function ChatScreen() {
                           "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
                   }}
                   style={{
-                    width: 40,
-                    height: 40,
+                    width: responsive.width(40),
+                    height: responsive.height(40),
                     borderRadius: 20,
-                    marginRight: 10,
+                    marginRight: responsive.width(10),
                   }}
                 />
                 <Text style={styles.userName}>
@@ -488,7 +489,7 @@ export default function ChatScreen() {
                   >
                     {chatType === "group" && item.senderName && item.sender !== auth.currentUser.uid && (
                       <Text
-                        style={{ color: theme.groupMessageSender, fontSize: wp("3.7%"), marginBottom: 2, fontWeight: 700 }}
+                        style={{ color: theme.groupMessageSender, fontSize: responsive.fontSize(14), marginBottom: responsive.height(2), fontWeight: 700 }}
                       >
                         {item.senderName}
                       </Text>
@@ -499,8 +500,8 @@ export default function ChatScreen() {
                     style={[
                       styles.timestamp,
                       item.sender === auth.currentUser.uid
-                        ? { alignSelf: "flex-end", marginRight: 15 }
-                        : { alignSelf: "flex-start", marginLeft: 15 },
+                        ? { alignSelf: "flex-end", marginRight: responsive.width(15) }
+                        : { alignSelf: "flex-start", marginLeft: responsive.width(15) },
                     ]}
                   >
                     {formatTimestamp(item.timestamp)}
@@ -508,7 +509,7 @@ export default function ChatScreen() {
                 </View>
               )
             }
-            contentContainerStyle={{ paddingBottom: 10 }}
+            contentContainerStyle={{ paddingBottom: responsive.height(10) }}
             inverted
           />
         </View>

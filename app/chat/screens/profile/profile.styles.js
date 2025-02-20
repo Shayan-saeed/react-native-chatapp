@@ -1,9 +1,7 @@
 import { StyleSheet } from "react-native";
-import {
-  widthPercentageToDP as wp,
-  heightPercentageToDP as hp,
-} from "react-native-responsive-screen";
+
 import { useTheme } from "@/components/theme/ThemeContext";
+import responsive from "@/utils/responsive";
 
 export const useChatStyles = () => {
   const theme = useTheme();
@@ -19,22 +17,22 @@ export const useChatStyles = () => {
       alignItems: "center",
       justifyContent: "space-between",
       width: "100%",
-      paddingVertical: 15,
-      paddingHorizontal: 20,
+      paddingVertical: responsive.height(15),
+      paddingHorizontal: responsive.width(20),
       backgroundColor: "#1E90FF",
     },
     headerTitle: {
-      fontSize: wp("5%"),
+      fontSize: responsive.fontSize(18),
       fontWeight: "bold",
       color: "white",
     },
     profilePicContainer: {
-      marginTop: 30,
+      marginTop: responsive.height(30),
       position: "relative",
     },
     profilePic: {
-      width: 120,
-      height: 120,
+      width: responsive.width(120),
+      height: responsive.height(120),
       borderRadius: 60,
       borderWidth: 3,
       borderColor: "white",
@@ -49,30 +47,30 @@ export const useChatStyles = () => {
     },
     detailsContainer: {
       width: "90%",
-      marginTop: 40,
+      marginTop: responsive.height(40),
       backgroundColor: theme.searchContainerBG,
       padding: 15,
       borderRadius: 10,
     },
     detailItem: {
-      marginBottom: 15,
+      marginBottom: responsive.height(15),
     },
     label: {
-      ffontSize: wp("3.9%"),
+      ffontSize: responsive.fontSize(14),
       color: "#888",
     },
     value: {
-      fontSize: wp("5%"),
+      fontSize: responsive.fontSize(18),
       color: theme.textColor,
       fontWeight: "bold",
     },
     input: {
-      fontSize: wp("5%"),
+      fontSize: responsive.fontSize(18),
       color: theme.textColor,
       fontWeight: "bold",
       borderBottomWidth: 1,
       borderBottomColor: "gray",
-      paddingVertical: 5,
+      paddingVertical: responsive.height(5),
     },
     logoutButton: {
       flexDirection: "row",
@@ -82,14 +80,14 @@ export const useChatStyles = () => {
       borderWidth: 1,
       padding: 12,
       borderRadius: 30,
-      marginTop: 30,
+      marginTop: responsive.height(30),
       width: "80%",
       justifyContent: "center",
     },
     logoutText: {
-      fontSize: wp("4.4%"),
+      fontSize: responsive.fontSize(16),
       color: theme.textColor,
-      marginLeft: 10,
+      marginLeft: responsive.width(10),
     },
   });
 };
