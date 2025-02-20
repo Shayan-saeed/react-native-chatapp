@@ -14,6 +14,7 @@ import { signOut, updateEmail, updateProfile } from "firebase/auth";
 import { auth, db } from "../../../config/firebaseConfig";
 import { useState, useEffect, useCallback } from "react";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import * as ImagePicker from "expo-image-picker";
 import { useChatStyles } from "./profile.styles";
 import { useTheme } from "@/components/theme/ThemeContext";
 import { removeToken } from "@/utils/authStorage";
@@ -23,6 +24,8 @@ export default function ProfileScreen() {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState("");
   const [editedEmail, setEditedEmail] = useState("");
+  const [profileImage, setProfileImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
   const currentUserID = auth.currentUser.uid;
   const [loading, setLoading] = useState(false);
   const styles = useChatStyles();
@@ -39,6 +42,7 @@ export default function ProfileScreen() {
           setUserData(data);
           setEditedName(data.name || "");
           setEditedEmail(data.email || "");
+          setProfileImage(data.profileImage);
         } else {
           console.error("User does not exist");
         }
@@ -49,6 +53,58 @@ export default function ProfileScreen() {
 
     fetchUserData();
   }, [currentUserID]);
+
+  const handleProfileImageUpdate = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+
+    if (result.canceled) return;
+
+    setUploading(true);
+
+    try {
+      let formData = new FormData();
+      formData.append("file", {
+        uri: result.assets[0].uri,
+        type: "image/jpeg",
+        name: "profile.jpg",
+      });
+      formData.append("upload_preset", "user_uploads");
+
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dir9vradu/image/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const cloudinaryData = await response.json();
+
+      if (!cloudinaryData.secure_url) {
+        throw new Error("Upload failed");
+      }
+
+      const newProfileImage = cloudinaryData.secure_url;
+
+      await updateDoc(doc(db, "users", auth.currentUser.uid), {
+        profileImage: newProfileImage,
+      });
+
+      setUserData((prev) => ({ ...prev, profileImage: newProfileImage }));
+
+      Alert.alert("Success", "Profile picture updated!");
+    } catch (error) {
+      console.error("Error updating profile image:", error);
+      Alert.alert("Error", "Could not update profile picture.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const handleLogout = async () => {
     setLoading(true);
@@ -127,7 +183,11 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => {router.back(), setIsEditing(false);}}>
+        <TouchableOpacity
+          onPress={() => {
+            router.back(), setIsEditing(false);
+          }}
+        >
           <Ionicons name="arrow-back" size={24} color="white" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Profile</Text>
@@ -136,7 +196,11 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.profilePicContainer}>
+      <TouchableOpacity
+        style={styles.profilePicContainer}
+        onPress={handleProfileImageUpdate}
+        disabled={uploading}
+      >
         <Image
           source={{
             uri:
@@ -146,7 +210,11 @@ export default function ProfileScreen() {
           style={styles.profilePic}
         />
         <View style={styles.cameraIcon}>
-          <Ionicons name="camera" size={20} color="white" />
+          {uploading ? (
+            <ActivityIndicator size="small" color="white" />
+          ) : (
+            <Ionicons name="camera" size={20} color="white" />
+          )}
         </View>
       </TouchableOpacity>
 
@@ -180,7 +248,7 @@ export default function ProfileScreen() {
       <TouchableOpacity
         style={styles.logoutButton}
         onPress={isEditing ? handleSaveChanges : handleLogout}
-        disabled={loading}
+        disabled={loading || uploading}
       >
         {loading ? (
           <ActivityIndicator size="small" color="white" />
