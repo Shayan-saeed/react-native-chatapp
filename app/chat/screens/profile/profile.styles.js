@@ -35,7 +35,7 @@ export const useChatStyles = () => {
       height: responsive.height(120),
       borderRadius: 60,
       borderWidth: 3,
-      borderColor: "white",
+      borderColor: "#1E90FF",
     },
     cameraIcon: {
       position: "absolute",

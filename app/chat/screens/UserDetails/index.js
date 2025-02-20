@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Ionicons, MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, router } from "expo-router";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, arrayRemove, updateDoc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import { useFocusEffect } from "@react-navigation/native";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
@@ -92,9 +92,30 @@ const UserDetails = () => {
     }, [id])
   );
 
-  // const renderGroupMembers = ({ item }) => (
-  //   <Text style={styles.groupMember}>{item}</Text>
-  // );
+  const handleLeaveGroup = async () => {
+    if (chatType !== "group") return; 
+
+    const currentUserID = auth.currentUser.uid;
+  
+    if (!id || !currentUserID) {
+      Alert.alert("Error", "Invalid group or user.");
+      return;
+    }
+  
+    try {
+      const chatRef = doc(db, "chats", id);
+
+      await updateDoc(chatRef, {
+        users: arrayRemove(currentUserID),
+      });
+
+      router.replace("/chat/screens/groups");
+  
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      Alert.alert("Error", "Failed to leave group. Please try again.");
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -190,7 +211,7 @@ const UserDetails = () => {
         </View>
       )}
 
-      <TouchableOpacity style={styles.optionRow}>
+      <TouchableOpacity style={styles.optionRow} onPress={handleLeaveGroup}>
         <MaterialIcons name="block" size={24} color="#FF4D4D" />
         <Text style={styles.optionText}>
           {chatType === "group" ? "Leave" : "Block"} {name}
