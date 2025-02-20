@@ -37,5 +37,6 @@ const styles = StyleSheet.create({
   chatTextContainer: {
     flex: 1,
     marginLeft: responsive.width(12),
+    gap: 4,
   },
 });

@@ -4,9 +4,12 @@ import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "./config/firebaseConfig";
 import { router } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StatusBar } from "expo-status-bar";
+import { useTheme } from "@/components/theme/ThemeContext";
 
 export default function IndexScreen() {
   const [loading, setLoading] = useState(true);
+  const theme = useTheme();
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -35,8 +38,12 @@ export default function IndexScreen() {
   }, []);
 
   if (loading) {
-    return <ActivityIndicator size="large" />;
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={theme.colorMode === "dark" ? "#fff" : "#000"} />
+      </View>
+    );
   }
 
-  return <View />;
+  return <View style={{ flex: 1, backgroundColor: theme.colorMode === "dark" ? "#000" : "#fff" }} />;
 }

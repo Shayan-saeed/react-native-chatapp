@@ -79,13 +79,13 @@ export const useChatStyles = () => {
       marginTop: responsive.height(5),
     },
     groupMembersList: {
-      marginTop: responsive.height(10),
+      marginTop: responsive.height(2),
       width: "100%",
     },
     groupMemberItem: {
       flexDirection: "row",
       alignItems: "center",
-      padding: 10,
+      padding: 5,
     },
     profileImage: {
       width: responsive.width(42),

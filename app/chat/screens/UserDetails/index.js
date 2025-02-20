@@ -13,7 +13,7 @@ import { getDoc, doc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import { useFocusEffect } from "@react-navigation/native";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
-import {useChatStyles} from "./userdetails.styles";
+import { useChatStyles } from "./userdetails.styles";
 
 import { useTheme } from "@/components/theme/ThemeContext";
 import responsive from "@/utils/responsive";
@@ -79,8 +79,8 @@ const UserDetails = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
-        router.push(`/chat/${id}`); 
-        return true; 
+        router.push(`/chat/${id}`);
+        return true;
       };
 
       const backHandler = BackHandler.addEventListener(
@@ -88,7 +88,7 @@ const UserDetails = () => {
         onBackPress
       );
 
-      return () => backHandler.remove(); 
+      return () => backHandler.remove();
     }, [id])
   );
 
@@ -147,11 +147,20 @@ const UserDetails = () => {
             borderRadius: 10,
           }}
         >
-          <Text style={{ color: theme.textColor, fontSize: responsive.fontSize(17), fontWeight: "bold" }}>
+          <Text
+            style={{
+              color: theme.textColor,
+              fontSize: responsive.fontSize(17),
+              fontWeight: "bold",
+            }}
+          >
             Group Members
           </Text>
           {loading ? (
-            <SkeletonHeader />
+            <View style={{gap: 4}}>
+              <SkeletonHeader />
+              <SkeletonHeader />
+            </View>
           ) : (
             <FlatList
               data={groupMembersWithNames}
@@ -164,7 +173,11 @@ const UserDetails = () => {
                     style={styles.profileImage}
                   />
                   <Text
-                    style={{ color: theme.textColor, fontSize: responsive.fontSize(16), marginLeft: responsive.width(10) }}
+                    style={{
+                      color: theme.textColor,
+                      fontSize: responsive.fontSize(16),
+                      marginLeft: responsive.width(10),
+                    }}
                   >
                     {item.name}
                   </Text>
@@ -193,4 +206,3 @@ const UserDetails = () => {
 };
 
 export default UserDetails;
-
