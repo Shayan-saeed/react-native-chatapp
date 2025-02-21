@@ -11,7 +11,8 @@ import {
   Alert,
   Animated,
   TouchableWithoutFeedback,
-  BackHandler
+  BackHandler,
+  Modal,
 } from "react-native";
 import {
   doc,
@@ -23,6 +24,7 @@ import {
   orderBy,
   Timestamp,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../../config/firebaseConfig";
 import { useLocalSearchParams, router } from "expo-router";
@@ -33,9 +35,9 @@ import SkeletonMessage from "@/components/loaders/SkeletonMessage";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
 import { useChatStyles } from "./index.styles";
 import { formatTimestamp } from "@/utils/time";
-
 import { useTheme } from "@/components/theme/ThemeContext";
 import responsive from "@/utils/responsive";
+import * as ImagePicker from "expo-image-picker";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -51,6 +53,7 @@ export default function ChatScreen() {
   const [chatType, setChatType] = useState(null);
   const [chatData, setChatData] = useState(null);
   const [loadingData, setLoadingData] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(null);
   const styles = useChatStyles();
   const theme = useTheme();
 
@@ -93,37 +96,67 @@ export default function ChatScreen() {
   useFocusEffect(
     useCallback(() => {
       if (!id || !chatType) return;
-
+  
       setMessages([]);
       setLoadingMessages(true);
-
+  
       const currentUserID = auth.currentUser.uid;
       let chatID = id;
-
+  
       if (chatType === "person") {
         const chatUsers = [currentUserID, id].sort();
         chatID = chatUsers.join("_");
       }
-
+  
       console.log("Fetching messages for chatID:", chatID);
-
-      const messagesRef = collection(db, "chats", chatID, "messages");
+  
+      const chatRef = doc(db, "chats", chatID);
+      const messagesRef = collection(chatRef, "messages");
       const q = query(messagesRef, orderBy("timestamp", "desc"));
-
+  
       const unsubscribe = onSnapshot(q, async (snapshot) => {
         if (!snapshot.empty) {
           console.log("Messages received:", snapshot.docs.length);
-
-          const messagesData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-
+  
+          let deletedTimestamp = null;
+          const chatSnap = await getDoc(chatRef);
+  
+          if (chatSnap.exists()) {
+            const chatData = chatSnap.data();
+  
+            // **Check if `deletedBy` is an array and find the user's entry**
+            if (Array.isArray(chatData.deletedBy)) {
+              const userDeleteEntry = chatData.deletedBy.find(entry => entry.userId === currentUserID);
+              if (userDeleteEntry) {
+                deletedTimestamp = userDeleteEntry.timestamp;
+              }
+            }
+  
+            // **Reset unread count if it's not zero**
+            if (chatData.unreadCount && chatData.unreadCount[currentUserID] !== 0) {
+              const updatedUnreadCount = {
+                ...chatData.unreadCount,
+                [currentUserID]: 0,
+              };
+  
+              await setDoc(chatRef, { unreadCount: updatedUnreadCount }, { merge: true });
+            }
+          }
+  
+          // **Process messages and filter based on deletedTimestamp**
+          const messagesData = snapshot.docs
+            .map((doc) => ({
+              id: doc.id,
+              ...doc.data(),
+              displayContent: doc.data().isUrl ? doc.data().imageUrl : doc.data().text || "",
+            }))
+            .filter((msg) =>
+              deletedTimestamp ? msg.timestamp.toMillis() > deletedTimestamp.seconds * 1000 : true
+            );
+  
           if (chatType === "group") {
-            const senderIDs = [
-              ...new Set(messagesData.map((msg) => msg.sender)),
-            ];
-
+            const senderIDs = [...new Set(messagesData.map((msg) => msg.sender))];
+  
             const senderPromises = senderIDs.map(async (senderID) => {
               const userDoc = await getDoc(doc(db, "users", senderID));
               return {
@@ -131,19 +164,19 @@ export default function ChatScreen() {
                 name: userDoc.exists() ? userDoc.data().name : "Unknown",
               };
             });
-
+  
             const senderResults = await Promise.all(senderPromises);
             const senderNameMap = senderResults.reduce((acc, sender) => {
               acc[sender.id] = sender.name;
               return acc;
             }, {});
-
-            const updatedMessages = messagesData.map((msg) => ({
-              ...msg,
-              senderName: senderNameMap[msg.sender] || "Unknown",
-            }));
-
-            setMessages(updatedMessages);
+  
+            setMessages(
+              messagesData.map((msg) => ({
+                ...msg,
+                senderName: senderNameMap[msg.sender] || "Unknown",
+              }))
+            );
           } else {
             setMessages(messagesData);
           }
@@ -151,36 +184,14 @@ export default function ChatScreen() {
           console.log("No messages found.");
           setMessages([]);
         }
-
+  
         setLoadingMessages(false);
-
-        const chatRef = doc(db, "chats", chatID);
-        const chatSnap = await getDoc(chatRef);
-
-        if (chatSnap.exists()) {
-          const chatData = chatSnap.data();
-          if (
-            chatData.unreadCount &&
-            chatData.unreadCount[currentUserID] !== 0
-          ) {
-            const updatedUnreadCount = {
-              ...chatData.unreadCount,
-              [currentUserID]: 0,
-            };
-
-            await setDoc(
-              chatRef,
-              { unreadCount: updatedUnreadCount },
-              { merge: true }
-            );
-          }
-        }
       });
-
+  
       return () => unsubscribe();
     }, [id, chatType])
   );
-
+  
   useFocusEffect(
     useCallback(() => {
       return () => {
@@ -210,22 +221,21 @@ export default function ChatScreen() {
     useCallback(() => {
       const onBackPress = () => {
         if (chatType === "group") {
-          router.push("/chat/screens/groups"); 
+          router.push("/chat/screens/groups");
         } else {
-          router.push("/chat"); 
+          router.push("/chat");
         }
-        return true; 
+        return true;
       };
-  
+
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
         onBackPress
       );
-  
-      return () => backHandler.remove(); 
+
+      return () => backHandler.remove();
     }, [chatType])
   );
-  
 
   // const clearChat = async () => {
   //   try {
@@ -263,8 +273,52 @@ export default function ChatScreen() {
     }
   };
 
-  const sendMessage = async () => {
-    if (!newMessage.trim()) return;
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      uploadImageToCloudinary(result.assets[0].uri);
+    }
+  };
+
+  const uploadImageToCloudinary = async (imageUri) => {
+    try {
+      const data = new FormData();
+      data.append("file", {
+        uri: imageUri,
+        type: "image/jpeg",
+        name: "chat_image.jpg",
+      });
+      data.append("upload_preset", "user_uploads");
+      data.append("cloud_name", "dir9vradu");
+
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dir9vradu/image/upload",
+        {
+          method: "POST",
+          body: data,
+        }
+      );
+
+      const fileData = await response.json();
+      if (fileData.secure_url) {
+        sendMessage(fileData.secure_url, true);
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+    }
+  };
+
+  const sendMessage = async (messageContent, isImage = false) => {
+    setAttachmentMenuVisible(false);
+    setIsMenuVisible(false);
+
+    if (!messageContent.trim()) return;
 
     try {
       setNewMessage("");
@@ -286,6 +340,12 @@ export default function ChatScreen() {
       if (chatSnap.exists()) {
         const chatData = chatSnap.data();
 
+        if (chatData.showChat?.[id] === false) {
+          await updateDoc(chatRef, {
+            [`showChat.${id}`]: true,
+          });
+        }
+
         if (chatType === "person") {
           existingUnreadCount = chatData.unreadCount?.[id] || 0;
         } else if (chatType === "group") {
@@ -298,7 +358,9 @@ export default function ChatScreen() {
 
       const messageData = {
         sender: currentUserID,
-        text: newMessage,
+        text: isImage ? "" : messageContent,
+        imageUrl: isImage ? messageContent : null,
+        isUrl: isImage,
         timestamp: Timestamp.now(),
       };
 
@@ -307,7 +369,7 @@ export default function ChatScreen() {
       const updatedChatData = {
         users:
           chatType === "group" ? chatData.users : [currentUserID, id].sort(),
-        lastMessage: newMessage,
+        lastMessage: isImage ? "📷 Image" : messageContent,
         lastMessageTimestamp: Timestamp.now(),
       };
 
@@ -377,7 +439,13 @@ export default function ChatScreen() {
     }
   };
 
-  const handleOpenProfile = () => {};
+  const openImageModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null);
+  };
 
   return (
     <TouchableWithoutFeedback onPress={handleOutsideTap}>
@@ -408,7 +476,8 @@ export default function ChatScreen() {
                       ? chatData?.groupName || "Unknown Group"
                       : userData?.name || "Unknown User",
                   profileImage:
-                    userData?.profileImage || chatData?.groupImage ||
+                    userData?.profileImage ||
+                    chatData?.groupImage ||
                     "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
                   chatType: chatType,
                 },
@@ -423,7 +492,8 @@ export default function ChatScreen() {
                   source={{
                     uri:
                       chatType === "group"
-                        ? chatData?.groupImage || "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg"
+                        ? chatData?.groupImage ||
+                          "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg"
                         : userData?.profileImage ||
                           "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
                   }}
@@ -513,8 +583,8 @@ export default function ChatScreen() {
                   <View
                     style={
                       item.sender === auth.currentUser.uid
-                        ? styles.sentMessage
-                        : styles.receivedMessage
+                        ? styles.sentMessage(item.isUrl)
+                        : styles.receivedMessage(item.isUrl)
                     }
                   >
                     {chatType === "group" &&
@@ -531,7 +601,28 @@ export default function ChatScreen() {
                           {item.senderName}
                         </Text>
                       )}
-                    <Text style={styles.messageText}>{item.text}</Text>
+                    {item.isUrl ? (
+                      <TouchableOpacity
+                        onPress={() => openImageModal(item.displayContent)}
+                      >
+                        <Image
+                          source={{ uri: item.displayContent }}
+                          style={{
+                            width: responsive.width(200),
+                            height: responsive.height(200),
+                            borderRadius: 10,
+                            borderTopRightRadius:
+                              item.sender === auth.currentUser.uid ? 20 : 10,
+                            borderTopLeftRadius:
+                              item.sender === auth.currentUser.uid ? 10 : 20,
+                            zIndex: 1,
+                          }}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
+                    ) : (
+                      <Text style={styles.messageText}>{item.text}</Text>
+                    )}
                   </View>
                   <Text
                     style={[
@@ -557,6 +648,35 @@ export default function ChatScreen() {
           />
         </View>
 
+        <Modal
+          visible={!!selectedImage}
+          transparent={true}
+          animationType="fade"
+        >
+          <TouchableWithoutFeedback onPress={closeImageModal}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: "rgba(0,0,0,0.9)",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              {selectedImage && (
+                <Image
+                  source={{ uri: selectedImage }}
+                  style={{
+                    width: "90%",
+                    height: "80%",
+                    resizeMode: "contain",
+                    borderRadius: 10,
+                  }}
+                />
+              )}
+            </View>
+          </TouchableWithoutFeedback>
+        </Modal>
+
         {attachmentMenuVisible && (
           <View style={styles.attachmentMenu}>
             <View style={styles.attachmentRow}>
@@ -572,7 +692,7 @@ export default function ChatScreen() {
 
               <TouchableOpacity
                 style={styles.attachmentOption}
-                onPress={() => console.log("Open Gallery")}
+                onPress={pickImage}
               >
                 <View style={styles.iconBox}>
                   <Ionicons name="image" size={30} color="white" />
@@ -656,13 +776,15 @@ export default function ChatScreen() {
               />
 
               <TouchableOpacity
-                onPress={
-                  newMessage.trim()
-                    ? sendMessage
-                    : isRecording
-                    ? stopRecording
-                    : startRecording
-                }
+                onPress={() => {
+                  if (newMessage.trim()) {
+                    sendMessage(newMessage, false);
+                  } else if (isRecording) {
+                    stopRecording();
+                  } else {
+                    startRecording();
+                  }
+                }}
                 style={styles.sendOrRecordButton}
               >
                 {newMessage.trim() ? (

@@ -5,10 +5,13 @@ import {
   View,
   Text,
   Image,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
 import { formatTimestamp } from "@/utils/time";
 import { useChatStyles } from "./chatlist.styles";
+import { doc, updateDoc, arrayUnion, Timestamp, getDoc, arrayRemove } from "firebase/firestore";
+import { db, auth } from "../../../app/config/firebaseConfig";
 
 export default function ChatList({
   items,
@@ -17,6 +20,53 @@ export default function ChatList({
 }) {
 
   const styles = useChatStyles();
+  const user = auth.currentUser;
+
+  const handleDeleteChat = async (chatId) => {
+    if (!user) return;
+
+    const chatUsers = [user.uid, chatId].sort();
+    const id = chatUsers.join("_");
+
+    const chatRef = doc(db, "chats", id);
+    const timestamp = Timestamp.now();
+
+    try {
+      const chatDoc = await getDoc(chatRef);
+      if (!chatDoc.exists()) return;
+
+      const chatData = chatDoc.data();
+      const deletedByArray = chatData.deletedBy || [];
+
+      const existingEntry = deletedByArray.find(entry => entry.userId === user.uid);
+
+      if (existingEntry) {
+        await updateDoc(chatRef, {
+          deletedBy: arrayRemove(existingEntry),
+        });
+      }
+      await updateDoc(chatRef, {
+        deletedBy: arrayUnion({ userId: user.uid, timestamp }),
+        [`showChat.${user.uid}`]: false,
+      });
+
+    } catch (error) {
+      console.error("Error deleting chat:", error);
+    }
+  };
+
+  const confirmDeleteChat = (chatId, chatType) => {
+    if(chatType === "group") return;
+    Alert.alert(
+      "Delete Chat",
+      "Are you sure you want to delete this chat?",
+      [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", onPress: () => handleDeleteChat(chatId), style: "destructive" },
+      ],
+      { cancelable: true }
+    );
+  };
 
   return (
       <FlatList
@@ -26,6 +76,7 @@ export default function ChatList({
           <TouchableOpacity
             style={styles.chatItem}
             onPress={() => router.push(`/chat/${item.id}`)}
+            onLongPress={() => confirmDeleteChat(item.id, item.type)}
           >
             <TouchableOpacity
               style={styles.profileImageContainer}

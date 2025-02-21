@@ -28,27 +28,28 @@ export const useChatStyles = () => {
       fontSize: responsive.fontSize(12),
       color: theme.inputColor,
     },
-    sentMessage: {
+    sentMessage: (isUrl) => ({
       alignSelf: "flex-end",
       backgroundColor: "#1E90FF",
-      padding: 8,
-      paddingInline: 10,
+      padding: isUrl ? 2 : 5,
+      paddingInline: isUrl ? 2 : 10,
       borderRadius: 10,
       borderTopRightRadius: 20,
       marginVertical: responsive.height(10),
       marginRight: responsive.width(10),
       maxWidth: "70%",
-    },
-    receivedMessage: {
+    }),
+    receivedMessage: (isUrl) => ({
       alignSelf: "flex-start",
       backgroundColor: theme.recievedMessageBG,
-      padding: 10,
+      padding: isUrl ? 2 : 5,
+      paddingInline: isUrl ? 2 : 10,
       borderRadius: 10,
       borderTopLeftRadius: 20,
       marginVertical: responsive.height(5),
       marginLeft: responsive.width(10),
       maxWidth: "70%",
-    },
+    }),
     messageText: {
       fontSize: responsive.fontSize(14),
       color: "white",
@@ -130,11 +131,7 @@ export const useChatStyles = () => {
       color: theme.textColor,
       fontSize: responsive.fontSize(16),
     },
-    groupMessageSender:{
-
-    },
-    groupMessageReceiver: {
-      
-    }
+    groupMessageSender: {},
+    groupMessageReceiver: {},
   });
 };

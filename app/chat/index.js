@@ -1,5 +1,12 @@
-import React, { useEffect, useState,useCallback } from "react";
-import { View, Text, TouchableOpacity, TextInput, Alert, BackHandler } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  Alert,
+  BackHandler,
+} from "react-native";
 import {
   collection,
   getDocs,
@@ -10,6 +17,7 @@ import {
   doc,
   setDoc,
   Timestamp,
+  updateDoc,
 } from "firebase/firestore";
 import { db, auth } from "../config/firebaseConfig";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
@@ -45,19 +53,20 @@ export default function ChatListScreen() {
           { text: "Cancel", style: "cancel" },
           { text: "Exit", onPress: () => BackHandler.exitApp() },
         ]);
-        return true; 
+        return true;
       };
 
       const backHandler = BackHandler.addEventListener(
         "hardwareBackPress",
         backAction
       );
-  
+
       return () => backHandler.remove();
     }, [])
   );
-  useEffect(() => {
-    const fetchUsers = () => {
+
+  useFocusEffect(
+    useCallback(() => {
       const currentUserID = auth.currentUser.uid;
 
       const chatsQuery = query(
@@ -80,6 +89,7 @@ export default function ChatListScreen() {
           const chatData = doc.data();
 
           if (chatData.type !== "person") continue;
+          if (chatData.showChat?.[currentUserID] === false) continue;
 
           const usersArray = chatData.users;
           const otherUserID = usersArray.find((uid) => uid !== currentUserID);
@@ -90,10 +100,23 @@ export default function ChatListScreen() {
             const timestamp = chatData.lastMessageTimestamp;
             const unreadCount = chatData.unreadCount?.[currentUserID] || 0;
 
+            let deletedByTimestamp = null;
+            if (Array.isArray(chatData.deletedBy)) {
+              const deletedEntry = chatData.deletedBy.find(
+                (entry) => entry.userId === currentUserID
+              );
+              deletedByTimestamp = deletedEntry ? deletedEntry.timestamp : null;
+            }
+
+            const showMessage =
+            !deletedByTimestamp || 
+            !timestamp ||
+            timestamp.toMillis() > deletedByTimestamp.toMillis();
+
             chatDetails.push({
               id: doc.id,
               otherUserID,
-              lastMessage,
+              lastMessage: showMessage ? lastMessage : "No messages yet",
               timestamp,
               unreadCount,
             });
@@ -133,10 +156,8 @@ export default function ChatListScreen() {
       });
 
       return () => unsubscribe();
-    };
-
-    fetchUsers();
-  }, []);
+    }, [])
+  );
 
   useEffect(() => {
     setFilteredUsers(users);
@@ -190,7 +211,15 @@ export default function ChatListScreen() {
       const chatRef = doc(db, "chats", chatID);
       const chatSnap = await getDoc(chatRef);
 
-      if (!chatSnap.exists()) {
+      if (chatSnap.exists()) {
+        const chatData = chatSnap.data();
+
+        if (chatData.showChat?.[currentUserID] === false) {
+          await updateDoc(chatRef, {
+            [`showChat.${currentUserID}`]: true,
+          });
+        }
+      } else {
         await setDoc(chatRef, {
           type: "person",
           users: chatUsers,
@@ -199,6 +228,10 @@ export default function ChatListScreen() {
           unreadCount: {
             [currentUserID]: 0,
             [userToChatWith.id]: 0,
+          },
+          showChat: {
+            [currentUserID]: true,
+            [userToChatWith.id]: true,
           },
         });
       }
@@ -219,7 +252,7 @@ export default function ChatListScreen() {
   const handleClose = () => {
     setVisible(false);
   };
-  
+
   return (
     <GestureHandlerRootView style={styles.container}>
       <MainScreenHeader />
@@ -247,8 +280,18 @@ export default function ChatListScreen() {
           setIsProfileModalVisible={setIsProfileModalVisible}
         />
       ) : (
-        <View style={{ marginLeft: responsive.width(2), marginTop: responsive.height(5) }}>
-          <Text style={{ color: theme.textColor, fontSize: responsive.fontSize(15) }}>
+        <View
+          style={{
+            marginLeft: responsive.width(2),
+            marginTop: responsive.height(5),
+          }}
+        >
+          <Text
+            style={{
+              color: theme.textColor,
+              fontSize: responsive.fontSize(15),
+            }}
+          >
             No chats found. Start a new chat!
           </Text>
         </View>
@@ -267,7 +310,7 @@ export default function ChatListScreen() {
         <MaterialIcons name="add-comment" size={30} color="white" />
       </TouchableOpacity>
 
-        <Backdrop
+      <Backdrop
         visible={visible}
         handleOpen={handleOpen}
         handleClose={handleClose}
@@ -316,4 +359,3 @@ export default function ChatListScreen() {
     </GestureHandlerRootView>
   );
 }
-
