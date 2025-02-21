@@ -7,11 +7,12 @@ import {
   FlatList,
   BackHandler,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons, MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, router } from "expo-router";
-import { getDoc, doc, arrayRemove, updateDoc } from "firebase/firestore";
+import { getDoc, doc, arrayRemove, updateDoc, deleteDoc } from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import { useFocusEffect } from "@react-navigation/native";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
@@ -67,13 +68,20 @@ const UserDetails = () => {
     try {
       setUploading(true);
       let formData = new FormData();
-      formData.append("file", { uri: imageUri, type: "image/jpeg", name: "group.jpg" });
-      formData.append("upload_preset", "user_uploads"); 
-
-      const response = await fetch("https://api.cloudinary.com/v1_1/dir9vradu/image/upload", {
-        method: "POST",
-        body: formData,
+      formData.append("file", {
+        uri: imageUri,
+        type: "image/jpeg",
+        name: "group.jpg",
       });
+      formData.append("upload_preset", "user_uploads");
+
+      const response = await fetch(
+        "https://api.cloudinary.com/v1_1/dir9vradu/image/upload",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       const data = await response.json();
       if (data.secure_url) {
@@ -90,10 +98,10 @@ const UserDetails = () => {
     try {
       const groupRef = doc(db, "chats", id);
       const groupDoc = await getDoc(groupRef);
-  
+
       if (groupDoc.exists()) {
         await updateDoc(groupRef, {
-          groupImage: url, 
+          groupImage: url,
         });
         setGroupImage(url);
       } else {
@@ -103,14 +111,18 @@ const UserDetails = () => {
       console.error("Error updating group image:", error);
     }
   };
-  
+
   const fetchUserNames = async () => {
     try {
       const usersData = await Promise.all(
         groupMembers.map(async (userID) => {
           const userDoc = await getDoc(doc(db, "users", userID));
           if (userDoc.exists()) {
-            return { id: userID, name: userDoc.data().name, profileImage: userDoc.data().profileImage };
+            return {
+              id: userID,
+              name: userDoc.data().name,
+              profileImage: userDoc.data().profileImage,
+            };
           }
           return null;
         })
@@ -151,28 +163,53 @@ const UserDetails = () => {
   );
 
   const handleLeaveGroup = async () => {
-    if (chatType !== "group") return; 
+    if (chatType !== "group") return;
 
-    const currentUserID = auth.currentUser.uid;
-  
-    if (!id || !currentUserID) {
-      Alert.alert("Error", "Invalid group or user.");
-      return;
-    }
-  
-    try {
-      const chatRef = doc(db, "chats", id);
+    Alert.alert(
+      "Leave Group",
+      "Are you sure you want to leave this group?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Leave",
+          style: "destructive",
+          onPress: async () => {
+            const currentUserID = auth.currentUser?.uid;
 
-      await updateDoc(chatRef, {
-        users: arrayRemove(currentUserID),
-      });
+            if (!id || !currentUserID) {
+              Alert.alert("Error", "Invalid group or user.");
+              return;
+            }
 
-      router.replace("/chat/screens/groups");
-  
-    } catch (error) {
-      console.error("Error leaving group:", error);
-      Alert.alert("Error", "Failed to leave group. Please try again.");
-    }
+            try {
+              const chatRef = doc(db, "chats", id);
+              await updateDoc(chatRef, {
+                users: arrayRemove(currentUserID),
+              });
+
+              const groupDoc = await getDoc(chatRef);
+              if (groupDoc.exists()) {
+                const updatedUsers = groupDoc.data().users || [];
+
+                if (updatedUsers.length < 2) {
+                  await deleteDoc(chatRef);
+                  console.log("Group deleted as it had less than 2 members.");
+                }
+              }
+
+              router.replace("/chat/screens/groups");
+            } catch (error) {
+              console.error("Error leaving group:", error);
+              Alert.alert("Error", "Failed to leave group. Please try again.");
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
   };
 
   return (
@@ -186,7 +223,13 @@ const UserDetails = () => {
 
       <View>
         <Image
-          source={{ uri: chatType === "group" ? groupImage || "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg" : profileImage }}
+          source={{
+            uri:
+              chatType === "group"
+                ? groupImage ||
+                  "https://static.vecteezy.com/system/resources/previews/000/550/535/non_2x/user-icon-vector.jpg"
+                : profileImage,
+          }}
           style={styles.groupImage}
         />
         {chatType === "group" && (
@@ -242,7 +285,7 @@ const UserDetails = () => {
             Group Members
           </Text>
           {loading ? (
-            <View style={{gap: 4}}>
+            <View style={{ gap: 4 }}>
               <SkeletonHeader />
               <SkeletonHeader />
             </View>
@@ -253,7 +296,9 @@ const UserDetails = () => {
                 <View style={styles.groupMemberItem}>
                   <Image
                     source={{
-                      uri: item?.profileImage || "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
+                      uri:
+                        item?.profileImage ||
+                        "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
                     }}
                     style={styles.profileImage}
                   />
