@@ -212,6 +212,7 @@ export default function ChatScreen() {
           setIsMenuVisible={setIsMenuVisible}
         />
         <MessageList
+          id={id}
           messages={messages}
           loadingMessages={loadingMessages}
           chatType={chatType}

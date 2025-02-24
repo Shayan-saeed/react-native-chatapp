@@ -92,13 +92,14 @@ function useMessages(id, chatType) {
             }, {});
 
             setMessages(
-              messagesData.map((msg) => ({
+              messagesData.filter((msg)=> !(msg.isDeleted?.[auth.currentUser.uid]))
+              .map((msg) => ({
                 ...msg,
                 senderName: senderNameMap[msg.sender] || "Unknown",
               }))
             );
           } else {
-            setMessages(messagesData);
+            setMessages(messagesData.filter((msg)=> !(msg.isDeleted?.[auth.currentUser.uid])));
           }
         } else {
           setMessages([]);
