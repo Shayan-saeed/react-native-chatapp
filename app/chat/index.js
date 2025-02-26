@@ -28,10 +28,10 @@ import ChatList from "@/components/chat/ChatList";
 import ProfileModal from "@/components/modal/ProfileModal";
 import ChatListLoader from "@/components/loaders/ChatListLoader";
 import { useFocusEffect } from "@react-navigation/native";
-
 import { useChatStyles } from "./index.styles";
 import { useTheme } from "@/components/theme/ThemeContext";
 import responsive from "@/utils/responsive";
+import StartChatBottomSheet from "@/components/ui/StartChatBottomSheet";
 
 export default function ChatListScreen() {
   const [users, setUsers] = useState([]);
@@ -109,9 +109,9 @@ export default function ChatListScreen() {
             }
 
             const showMessage =
-            !deletedByTimestamp || 
-            !timestamp ||
-            timestamp.toMillis() > deletedByTimestamp.toMillis();
+              !deletedByTimestamp ||
+              !timestamp ||
+              timestamp.toMillis() > deletedByTimestamp.toMillis();
 
             chatDetails.push({
               id: doc.id,
@@ -309,8 +309,17 @@ export default function ChatListScreen() {
       >
         <MaterialIcons name="add-comment" size={30} color="white" />
       </TouchableOpacity>
-
-      <Backdrop
+      {visible && (
+        <StartChatBottomSheet
+          visible={visible}
+          startChatLoading={startChatLoading}
+          handleNewChat={handleNewChat}
+          newChatEmail={newChatEmail}
+          setNewChatEmail={setNewChatEmail}
+          onClose={() => setVisible(false)}
+        />
+      )}
+      {/* <Backdrop
         visible={visible}
         handleOpen={handleOpen}
         handleClose={handleClose}
@@ -355,7 +364,7 @@ export default function ChatListScreen() {
             {startChatLoading ? "Starting..." : "Start Chat"}
           </Text>
         </TouchableOpacity>
-      </Backdrop>
+      </Backdrop> */}
     </GestureHandlerRootView>
   );
 }

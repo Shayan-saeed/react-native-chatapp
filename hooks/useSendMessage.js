@@ -11,11 +11,14 @@ import {
 import { db, auth } from "../app/config/firebaseConfig";
 
 function useSendMessage(id, chatType, setNewMessage) {
-  const sendMessage = async (messageContent, isImage = false) => {
+  const [sentLoading, setSentLoading] = useState(false);
+  const sendMessage = async (messageType, messageContent, waveformUrl = null, duration = null) => {
     if (!messageContent.trim()) return;
 
-    try {
-      setNewMessage("");
+    setNewMessage("");
+    setSentLoading(true);
+
+    try {  
       const currentUserID = auth.currentUser.uid;
       let chatID = id;
 
@@ -23,16 +26,15 @@ function useSendMessage(id, chatType, setNewMessage) {
         const chatUsers = [currentUserID, id].sort();
         chatID = chatUsers.join("_");
       }
-
+      
       const chatRef = doc(db, "chats", chatID);
-      const messagesRef = collection(chatRef, "messages");
-
       const chatSnap = await getDoc(chatRef);
+      let chatData = chatSnap.exists() ? chatSnap.data() : {};
+      const messagesRef = collection(chatRef, "messages");
+ 
       let existingUnreadCount = 0;
 
       if (chatSnap.exists()) {
-        const chatData = chatSnap.data();
-
         if (chatData.showChat?.[id] === false) {
           await updateDoc(chatRef, {
             [`showChat.${id}`]: true,
@@ -51,18 +53,21 @@ function useSendMessage(id, chatType, setNewMessage) {
 
       const messageData = {
         sender: currentUserID,
-        text: isImage ? "" : messageContent,
-        imageUrl: isImage ? messageContent : null,
-        isUrl: isImage,
+        messageType,
+        text: messageType === "text" ? messageContent : "",
+        imageUrl: messageType === "image" ? messageContent : null,
+        audioUrl: messageType === "audio" ? messageContent : null,
         timestamp: Timestamp.now(),
+        waveformUrl: waveformUrl,
+        audioDuration: duration,
       };
 
       await addDoc(messagesRef, messageData);
-
+      
       const updatedChatData = {
         users:
           chatType === "group" ? chatData.users : [currentUserID, id].sort(),
-        lastMessage: isImage ? "📷 Image" : messageContent,
+          lastMessage: messageType === "image" ? "📷 Image" : messageType === "audio" ? "🎤 Audio" : messageContent,
         lastMessageTimestamp: Timestamp.now(),
       };
 
@@ -74,14 +79,18 @@ function useSendMessage(id, chatType, setNewMessage) {
       } else if (chatType === "group") {
         updatedChatData.unreadCount = existingUnreadCount;
       }
-
+      setSentLoading(false);
       await setDoc(chatRef, updatedChatData, { merge: true });
+      
     } catch (error) {
       console.error("Error sending message:", error);
+    } finally {
+      setSentLoading(false);
     }
   };
 
-  return { sendMessage };
+  return { sendMessage, sentLoading };
 }
 
 export default useSendMessage;
+

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import {
   doc,
   collection,
@@ -10,10 +10,11 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../app/config/firebaseConfig"
 import { useFocusEffect } from "@react-navigation/native";
-
+import useSendMessage from "@/hooks/useSendMessage";
 function useMessages(id, chatType) {
   const [messages, setMessages] = useState([]);
   const [loadingMessages, setLoadingMessages] = useState(true);
+  const {sentMessage} = useSendMessage(id, chatType);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,8 +65,11 @@ function useMessages(id, chatType) {
             .map((doc) => ({
               id: doc.id,
               ...doc.data(),
-              displayContent: doc.data().isUrl
+              displayContent: 
+              doc.data().messageType === "image"
                 ? doc.data().imageUrl
+                : doc.data().messageType === "audio" 
+                ? "Audio Message"
                 : doc.data().text || "",
             }))
             .filter((msg) =>

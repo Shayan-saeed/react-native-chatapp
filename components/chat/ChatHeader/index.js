@@ -17,6 +17,7 @@ export default function index({
 }) {
   const styles = useChatStyles();
   const theme = useTheme();
+
   return (
     <View style={styles.header}>
       <TouchableOpacity

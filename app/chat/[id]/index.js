@@ -6,14 +6,11 @@ import {
   Image,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Animated,
   TouchableWithoutFeedback,
   BackHandler,
   Modal,
 } from "react-native";
-import { doc, getDoc, collection, addDoc, Timestamp, setDoc, updateDoc } from "firebase/firestore";
-import { db, auth } from "../../config/firebaseConfig";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
@@ -33,7 +30,7 @@ export default function ChatScreen() {
   const { userData, chatType, chatData, loadingData } = useChatData(id);
   const { messages, loadingMessages } = useMessages(id, chatType);
   const [newMessage, setNewMessage] = useState("");
-  const {sendMessage} = useSendMessage(id, chatType, setNewMessage);
+  const { sendMessage, sentLoading } = useSendMessage(id, chatType, setNewMessage);
   const [attachmentMenuVisible, setAttachmentMenuVisible] = useState(false);
   const [recording, setRecording] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -100,6 +97,7 @@ export default function ChatScreen() {
   };
 
   const pickImage = async () => {
+    setAttachmentMenuVisible(false);
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -133,7 +131,7 @@ export default function ChatScreen() {
 
       const fileData = await response.json();
       if (fileData.secure_url) {
-        sendMessage(fileData.secure_url, true);
+        sendMessage("image", fileData.secure_url);
       }
     } catch (error) {
       console.error("Error uploading image:", error);
@@ -145,7 +143,7 @@ export default function ChatScreen() {
       setIsRecording(true);
       const { status } = await Audio.requestPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission Denied", "Please enable microphone access.");
+        alert("Please enable microphone access.");
         setIsRecording(false);
         return;
       }
@@ -167,27 +165,46 @@ export default function ChatScreen() {
       setIsRecording(false);
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
+      const { audioUrl, waveformUrl, duration } = await uploadToCloudinary(uri);
 
-      const response = await fetch(uri);
-      const blob = await response.blob();
-      const reader = new FileReader();
-      reader.readAsDataURL(blob);
-      reader.onloadend = async () => {
-        const base64Audio = reader.result.split(",")[1];
-        sendMessage("audio", base64Audio);
-      };
+      if (audioUrl) {
+        sendMessage("audio", audioUrl, waveformUrl, duration); 
+    }
     } catch (error) {
       console.error("Error stopping recording:", error);
     }
   };
 
-  const playAudio = async (base64Audio) => {
+  const uploadToCloudinary = async (fileUri) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: fileUri,
+      type: "audio/mpeg",
+      name: "recording.mp3",
+    });
+    formData.append("upload_preset", "user_uploads");
+
     try {
-      const audioUri = `data:audio/mp3;base64,${base64Audio}`;
-      const { sound } = await Audio.Sound.createAsync({ uri: audioUri });
-      await sound.playAsync();
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/dir9vradu/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await response.json();
+      const audioUrl = data.secure_url;
+      const publicId = data.public_id;
+      const duration = data.duration;
+
+      // Generate waveform URL using Cloudinary transformations
+      const waveformUrl = `https://res.cloudinary.com/dir9vradu/video/upload/c_scale,h_250,w_700/fl_waveform,co_white,b_transparent/${publicId}.png`;
+
+      return { audioUrl, waveformUrl, duration };
     } catch (error) {
-      console.error("Error playing audio:", error);
+      console.error("Error uploading to Cloudinary:", error);
+      return { audioUrl: null, waveformUrl: null, duration: null };
     }
   };
 
@@ -215,6 +232,7 @@ export default function ChatScreen() {
           id={id}
           messages={messages}
           loadingMessages={loadingMessages}
+          sentLoading={sentLoading}
           chatType={chatType}
           openImageModal={openImageModal}
         />
@@ -272,7 +290,7 @@ export default function ChatScreen() {
               <TouchableOpacity
                 onPress={() => {
                   if (newMessage.trim()) {
-                    sendMessage(newMessage, false);
+                    sendMessage("text", newMessage);
                   } else if (isRecording) {
                     stopRecording();
                   } else {

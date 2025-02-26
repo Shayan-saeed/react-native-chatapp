@@ -7,22 +7,22 @@ export const useChatStyles = () => {
   const theme = useTheme();
 
   return StyleSheet.create({
-    sentMessage: (isUrl) => ({
+    sentMessage: (messageType) => ({
       alignSelf: "flex-end",
       backgroundColor: "#1E90FF",
-      padding: isUrl ? 2 : 5,
-      paddingInline: isUrl ? 2 : 10,
+      padding: messageType === "image" ? 2 : messageType === "audio" ? 0 : 5,
+      paddingInline: messageType === "image" ? 2 : 10,
       borderRadius: 10,
       borderTopRightRadius: 20,
       marginVertical: responsive.height(10),
       marginRight: responsive.width(10),
       maxWidth: "70%",
     }),
-    receivedMessage: (isUrl) => ({
+    receivedMessage: (messageType) => ({
       alignSelf: "flex-start",
       backgroundColor: theme.recievedMessageBG,
-      padding: isUrl ? 2 : 5,
-      paddingInline: isUrl ? 2 : 10,
+      padding: messageType === "image" ? 2 : messageType === "audio" ? 0 : 5,
+      paddingInline: messageType === "image" ? 2 : 10,
       borderRadius: 10,
       borderTopLeftRadius: 20,
       marginVertical: responsive.height(5),
@@ -37,6 +37,41 @@ export const useChatStyles = () => {
     timestamp: {
       fontSize: responsive.fontSize(12),
       color: theme.inputColor,
+    },
+    audioMessageContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      padding: 5,
+      borderRadius: 20,
+      maxWidth: "80%",
+      alignSelf: "flex-start",
+    },
+    audioPlayButton: {
+      width: 30,
+      height: 30,
+      borderRadius: 15,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    playIcon: {
+      fontSize: 16,
+      color: "white",
+      fontWeight: "bold",
+    },
+    audioWaveform: {
+      flex: 1,
+      flexDirection: "row",
+    },
+    waveText: {
+      fontSize: 18,
+      color: "#075E54",
+      letterSpacing: 2, 
+    },
+    audioDurationText: {
+      color: "white",
+      fontSize: 12,
+      alignSelf: "center",
+      marginTop: 45,
     },
   });
 };
