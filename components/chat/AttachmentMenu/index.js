@@ -3,14 +3,14 @@ import React from "react";
 import { Ionicons, FontAwesome5 } from "@expo/vector-icons";
 import { useChatStyles } from "./attachmentmenu.styles";
 
-export default function index({ pickImage }) {
+export default function index({ pickImage, takePictureFromCamera }) {
     const styles = useChatStyles();
   return (
     <View style={styles.attachmentMenu}>
       <View style={styles.attachmentRow}>
         <TouchableOpacity
           style={styles.attachmentOption}
-          onPress={() => console.log("Open Camera")}
+          onPress={takePictureFromCamera}
         >
           <View style={styles.iconBox}>
             <Ionicons name="camera" size={30} color="white" />

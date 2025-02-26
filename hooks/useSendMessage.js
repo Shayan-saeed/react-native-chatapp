@@ -10,13 +10,11 @@ import {
 } from "firebase/firestore";
 import { db, auth } from "../app/config/firebaseConfig";
 
-function useSendMessage(id, chatType, setNewMessage) {
-  const [sentLoading, setSentLoading] = useState(false);
+function useSendMessage(id, chatType, setNewMessage, setSentLoading) {
   const sendMessage = async (messageType, messageContent, waveformUrl = null, duration = null) => {
     if (!messageContent.trim()) return;
 
     setNewMessage("");
-    setSentLoading(true);
 
     try {  
       const currentUserID = auth.currentUser.uid;
@@ -63,7 +61,7 @@ function useSendMessage(id, chatType, setNewMessage) {
       };
 
       await addDoc(messagesRef, messageData);
-      
+      setSentLoading(false);
       const updatedChatData = {
         users:
           chatType === "group" ? chatData.users : [currentUserID, id].sort(),
@@ -79,9 +77,7 @@ function useSendMessage(id, chatType, setNewMessage) {
       } else if (chatType === "group") {
         updatedChatData.unreadCount = existingUnreadCount;
       }
-      setSentLoading(false);
       await setDoc(chatRef, updatedChatData, { merge: true });
-      
     } catch (error) {
       console.error("Error sending message:", error);
     } finally {
@@ -89,7 +85,7 @@ function useSendMessage(id, chatType, setNewMessage) {
     }
   };
 
-  return { sendMessage, sentLoading };
+  return { sendMessage };
 }
 
 export default useSendMessage;

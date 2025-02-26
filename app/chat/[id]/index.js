@@ -10,6 +10,7 @@ import {
   TouchableWithoutFeedback,
   BackHandler,
   Modal,
+  Text,
 } from "react-native";
 import { useLocalSearchParams, router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
@@ -30,15 +31,35 @@ export default function ChatScreen() {
   const { userData, chatType, chatData, loadingData } = useChatData(id);
   const { messages, loadingMessages } = useMessages(id, chatType);
   const [newMessage, setNewMessage] = useState("");
-  const { sendMessage, sentLoading } = useSendMessage(id, chatType, setNewMessage);
+  const [sentLoading, setSentLoading] = useState(false);
+  const { sendMessage } = useSendMessage(
+    id,
+    chatType,
+    setNewMessage,
+    setSentLoading
+  );
   const [attachmentMenuVisible, setAttachmentMenuVisible] = useState(false);
   const [recording, setRecording] = useState(null);
   const [isRecording, setIsRecording] = useState(false);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const slideAnim = useRef(new Animated.Value(-100)).current;
   const [selectedImage, setSelectedImage] = useState(null);
+  const [cameraPermission, setCameraPermission] = useState(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const recordingInterval = useRef(null);
+  const micScale = useRef(new Animated.Value(1)).current;
+  const micBackground = useRef(new Animated.Value(0)).current;
+  const [isPaused, setIsPaused] = useState(false);
+
   const styles = useChatStyles();
   const theme = useTheme();
+
+  useEffect(() => {
+    (async () => {
+      const cameraStatus = await ImagePicker.requestCameraPermissionsAsync();
+      setCameraPermission(cameraStatus.status === "granted");
+    })();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -68,6 +89,7 @@ export default function ChatScreen() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
+        handleCancelRecording();
         if (chatType === "group") {
           router.push("/chat/screens/groups");
         } else {
@@ -99,14 +121,34 @@ export default function ChatScreen() {
   const pickImage = async () => {
     setAttachmentMenuVisible(false);
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images", "videos"],
       allowsEditing: true,
       aspect: [4, 3],
       quality: 1,
     });
 
     if (!result.canceled) {
+      setSentLoading(true);
       uploadImageToCloudinary(result.assets[0].uri);
+    }
+  };
+
+  const takePictureFromCamera = async () => {
+    setAttachmentMenuVisible(false);
+    if (cameraPermission) {
+      let result = await ImagePicker.launchCameraAsync({
+        mediaTypes: ["images", "videos"],
+        allowsEditing: true,
+        aspect: [4, 3],
+        quality: 1,
+      });
+
+      if (!result.canceled) {
+        setSentLoading(true);
+        uploadImageToCloudinary(result.assets[0].uri);
+      }
+    } else {
+      console.log("Camera permission not granted");
     }
   };
 
@@ -141,10 +183,29 @@ export default function ChatScreen() {
   const startRecording = async () => {
     try {
       setIsRecording(true);
+      setRecordingDuration(0);
+      recordingInterval.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+
+      Animated.parallel([
+        Animated.timing(micScale, {
+          toValue: 1.2,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(micBackground, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+      ]).start();
+
       const { status } = await Audio.requestPermissionsAsync();
       if (status !== "granted") {
         alert("Please enable microphone access.");
         setIsRecording(false);
+        clearInterval(recordingInterval.current);
         return;
       }
 
@@ -154,24 +215,42 @@ export default function ChatScreen() {
       );
       await newRecording.startAsync();
       setRecording(newRecording);
+      setIsPaused(false);
     } catch (error) {
       console.error("Error starting recording:", error);
       setIsRecording(false);
+      clearInterval(recordingInterval.current);
     }
   };
 
   const stopRecording = async () => {
     try {
       setIsRecording(false);
+      setIsPaused(false);
+      clearInterval(recordingInterval.current);
+      setSentLoading(true);
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
       const { audioUrl, waveformUrl, duration } = await uploadToCloudinary(uri);
 
       if (audioUrl) {
-        sendMessage("audio", audioUrl, waveformUrl, duration); 
-    }
+        sendMessage("audio", audioUrl, waveformUrl, duration);
+      }
     } catch (error) {
       console.error("Error stopping recording:", error);
+    } finally {
+      Animated.parallel([
+        Animated.timing(micScale, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(micBackground, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+      ]).start();
     }
   };
 
@@ -214,6 +293,65 @@ export default function ChatScreen() {
 
   const closeImageModal = () => {
     setSelectedImage(null);
+  };
+
+  const formatDuration = (duration) => {
+    if (!duration) return "0:00";
+
+    const minutes = Math.floor(duration / 60);
+    const seconds = Math.floor(duration % 60);
+    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+  };
+
+  const handleRecordButtonClick = async () => {
+    if (isRecording) {
+      await stopRecording();
+    } else {
+      await startRecording();
+    }
+  };
+
+  const handleStopRecording = async () => {
+    await stopRecording();
+  };
+
+  const handleCancelRecording = () => {
+    setIsRecording(false);
+    clearInterval(recordingInterval.current);
+    Animated.parallel([
+      Animated.timing(micScale, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(micBackground, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+    if (recording) {
+      recording.stopAndUnloadAsync();
+      setRecording(null);
+    }
+  };
+
+  const pauseRecording = async () => {
+    if (recording) {
+      await recording.pauseAsync();
+      setIsPaused(true);
+      clearInterval(recordingInterval.current);
+    }
+  };
+
+  const resumeRecording = async () => {
+    if (recording) {
+      await recording.startAsync();
+      setIsPaused(false);
+      recordingInterval.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1);
+      }, 1000);
+    }
   };
 
   return (
@@ -265,48 +403,92 @@ export default function ChatScreen() {
           </TouchableWithoutFeedback>
         </Modal>
 
-        {attachmentMenuVisible && <AttachmentMenu pickImage={pickImage} />}
+        {attachmentMenuVisible && (
+          <AttachmentMenu
+            pickImage={pickImage}
+            takePictureFromCamera={takePictureFromCamera}
+          />
+        )}
 
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
         >
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View style={styles.inputContainer}>
-              <TouchableOpacity onPress={toggleAttachmentMenu}>
-                <Ionicons name="attach" size={24} color={theme.textColor} />
-              </TouchableOpacity>
+            <View
+              style={[
+                styles.inputContainer,
+                isRecording
+                  ? { backgroundColor: "#1E90FF" }
+                  : { backgroundColor: theme.searchContainerBG },
+              ]}
+            >
+              {isRecording ? (
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <TouchableOpacity onPress={handleCancelRecording}>
+                    <Ionicons
+                      name="trash-bin"
+                      size={24}
+                      color={theme.textColor}
+                    />
+                  </TouchableOpacity>
 
-              <TextInput
-                style={styles.input}
-                placeholder="Type a message"
-                placeholderTextColor={theme.lastMessage}
-                value={newMessage}
-                onChangeText={(text) => {
-                  setNewMessage(text);
-                  setIsRecording(false);
-                }}
-              />
+                  <TouchableOpacity
+                    onPress={isPaused ? resumeRecording : pauseRecording}
+                    style={{ marginLeft: 10 }}
+                  >
+                    <Ionicons
+                      name={isPaused ? "play" : "pause"}
+                      size={24}
+                      color={theme.textColor}
+                    />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity onPress={toggleAttachmentMenu}>
+                  <Ionicons name="attach" size={24} color={theme.textColor} />
+                </TouchableOpacity>
+              )}
 
-              <TouchableOpacity
-                onPress={() => {
-                  if (newMessage.trim()) {
-                    sendMessage("text", newMessage);
-                  } else if (isRecording) {
-                    stopRecording();
-                  } else {
-                    startRecording();
-                  }
-                }}
-                style={styles.sendOrRecordButton}
-              >
-                {newMessage.trim() ? (
-                  <Ionicons name="send" size={24} color={theme.textColor} />
-                ) : isRecording ? (
-                  <Ionicons name="stop-circle" size={30} color="red" />
-                ) : (
-                  <Ionicons name="mic" size={30} color={theme.textColor} />
-                )}
-              </TouchableOpacity>
+              {isRecording ? (
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Text style={{ color: theme.textColor, fontSize: 18 }}>
+                    {formatDuration(recordingDuration)}
+                  </Text>
+                </View>
+              ) : (
+                <TextInput
+                  style={styles.input}
+                  placeholder="Type a message"
+                  placeholderTextColor={theme.lastMessage}
+                  value={newMessage}
+                  onChangeText={(text) => setNewMessage(text)}
+                />
+              )}
+
+              {newMessage.trim() ? (
+                <Ionicons name="send" size={24} color={theme.textColor} />
+              ) : (
+                <Animated.View>
+                  <TouchableOpacity
+                    onPress={handleRecordButtonClick}
+                    style={styles.sendOrRecordButton}
+                  >
+                    <Animated.View style={{ transform: [{ scale: micScale }] }}>
+                      <Ionicons
+                        name={isRecording ? "arrow-up" : "mic"}
+                        size={30}
+                        color={theme.textColor}
+                      />
+                    </Animated.View>
+                  </TouchableOpacity>
+                </Animated.View>
+              )}
             </View>
           </View>
         </KeyboardAvoidingView>

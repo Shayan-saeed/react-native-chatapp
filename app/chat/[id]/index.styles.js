@@ -15,7 +15,6 @@ export const useChatStyles = () => {
       flex: 1,
       flexDirection: "row",
       alignItems: "center",
-      backgroundColor: theme.searchContainerBG,
       borderRadius: 30,
       paddingVertical: responsive.height(10),
       paddingHorizontal: responsive.width(15),
