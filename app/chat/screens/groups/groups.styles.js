@@ -81,6 +81,7 @@ export const useChatStyles = () => {
       fontWeight: "bold",
       color: theme.textColor,
       marginBottom: responsive.height(20),
+      alignSelf: "center",
     },
     input: {
       backgroundColor: theme.searchContainerBG,
@@ -126,6 +127,14 @@ export const useChatStyles = () => {
       paddingHorizontal: responsive.width(20),
       paddingVertical: responsive.height(20),
       height: "80%",
+    },
+    dragIndicator: {
+      width: 40,
+      height: 5,
+      backgroundColor: "gray",
+      borderRadius: 10,
+      marginBottom: 10,
+      alignSelf: "center"
     },
   });
 }

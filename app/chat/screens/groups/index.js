@@ -253,6 +253,7 @@ export default function ContactsScreen() {
         overlayColor="rgba(0,0,0,0.32)"
         containerStyle={styles.backdropStyle}
       >
+        <View style={styles.dragIndicator} />
         <Text style={styles.heading}>Create a Group Chat</Text>
 
         <TextInput
