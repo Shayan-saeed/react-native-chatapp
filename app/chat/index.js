@@ -244,15 +244,7 @@ export default function ChatListScreen() {
       setStartChatLoading(false);
     }
   };
-
-  const handleOpen = () => {
-    setVisible(true);
-  };
-
-  const handleClose = () => {
-    setVisible(false);
-  };
-
+  
   return (
     <GestureHandlerRootView style={styles.container}>
       <MainScreenHeader />
@@ -319,52 +311,6 @@ export default function ChatListScreen() {
           onClose={() => setVisible(false)}
         />
       )}
-      {/* <Backdrop
-        visible={visible}
-        handleOpen={handleOpen}
-        handleClose={handleClose}
-        onClose={() => {}}
-        swipeConfig={{
-          velocityThreshold: 0.3,
-          directionalOffsetThreshold: 80,
-        }}
-        animationConfig={{
-          speed: 14,
-          bounciness: 4,
-        }}
-        overlayColor="rgba(0,0,0,0.32)"
-        containerStyle={styles.backdropStyle}
-      >
-        <Text style={styles.modalTitle}>Start a New Chat</Text>
-
-        <View style={styles.inputContainer}>
-          <Ionicons
-            name="mail-outline"
-            size={20}
-            color={theme.lastMessage}
-            style={styles.icon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Enter email"
-            placeholderTextColor={theme.lastMessage}
-            value={newChatEmail}
-            onChangeText={setNewChatEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, startChatLoading && styles.buttonDisabled]}
-          onPress={handleNewChat}
-          disabled={startChatLoading}
-        >
-          <Text style={styles.buttonText}>
-            {startChatLoading ? "Starting..." : "Start Chat"}
-          </Text>
-        </TouchableOpacity>
-      </Backdrop> */}
     </GestureHandlerRootView>
   );
 }

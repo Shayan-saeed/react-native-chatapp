@@ -133,3 +133,91 @@
     padding: 25,
     alignItems: "center",
   },
+
+                      {/* <View style={styles.audioWaveform}>
+                      {item.waveformUrl ? (
+                        <Image 
+                          source={{uri: item.waveformUrl}}
+                          style={{
+                            width: responsive.width(150),
+                            height: responsive.height(40),
+                            resizeMode: "contain",
+                          }}
+                        />
+                      ) : (
+                        <View style={{flexDirection: "row"}}>
+                          <MaterialCommunityIcons
+                        name="waveform"
+                        size={24}
+                        color="white"
+                      />
+                      <MaterialCommunityIcons
+                        name="waveform"
+                        size={24}
+                        color="white"
+                      />
+                      <MaterialCommunityIcons
+                        name="waveform"
+                        size={24}
+                        color="white"
+                      />
+                      <MaterialCommunityIcons
+                        name="waveform"
+                        size={24}
+                        color="white"
+                      />
+                      <MaterialCommunityIcons
+                        name="waveform"
+                        size={24}
+                        color="white"
+                      />
+                        </View>
+                      )}
+                    </View> */}
+
+                    {/* <Backdrop
+        visible={visible}
+        handleOpen={handleOpen}
+        handleClose={handleClose}
+        onClose={() => {}}
+        swipeConfig={{
+          velocityThreshold: 0.3,
+          directionalOffsetThreshold: 80,
+        }}
+        animationConfig={{
+          speed: 14,
+          bounciness: 4,
+        }}
+        overlayColor="rgba(0,0,0,0.32)"
+        containerStyle={styles.backdropStyle}
+      >
+        <Text style={styles.modalTitle}>Start a New Chat</Text>
+
+        <View style={styles.inputContainer}>
+          <Ionicons
+            name="mail-outline"
+            size={20}
+            color={theme.lastMessage}
+            style={styles.icon}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Enter email"
+            placeholderTextColor={theme.lastMessage}
+            value={newChatEmail}
+            onChangeText={setNewChatEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+        </View>
+
+        <TouchableOpacity
+          style={[styles.button, startChatLoading && styles.buttonDisabled]}
+          onPress={handleNewChat}
+          disabled={startChatLoading}
+        >
+          <Text style={styles.buttonText}>
+            {startChatLoading ? "Starting..." : "Start Chat"}
+          </Text>
+        </TouchableOpacity>
+      </Backdrop> */}

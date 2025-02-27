@@ -5,7 +5,7 @@ import {
   TouchableOpacity,
   Image,
   Alert,
-  ActivityIndicator
+  ActivityIndicator,
 } from "react-native";
 import React, { useState } from "react";
 import SkeletonMessage from "@/components/loaders/SkeletonMessage";
@@ -18,13 +18,14 @@ import { useTheme } from "@/components/theme/ThemeContext";
 import { Audio } from "expo-av";
 import FontAwesome5 from "@expo/vector-icons/FontAwesome5";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import Slider from "@react-native-community/slider";
 
 const formatDuration = (duration) => {
-  if (!duration) return "0:00"; 
+  if (!duration) return "0:00";
 
   const minutes = Math.floor(duration / 60);
   const seconds = Math.floor(duration % 60);
-  return `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+  return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
 };
 
 export default function index({
@@ -44,7 +45,16 @@ export default function index({
   const [isPlaying, setIsPlaying] = useState(false);
 
   const displayMessages = sentLoading
-    ? [{ id: "sending", sender: auth.currentUser.uid, messageType: "text", text: "Sending...", timestamp: new Date() }, ...messages]
+    ? [
+        {
+          id: "sending",
+          sender: auth.currentUser.uid,
+          messageType: "text",
+          text: "Sending...",
+          timestamp: new Date(),
+        },
+        ...messages,
+      ]
     : messages;
 
   const handleDeleteMessage = async (messageId) => {
@@ -140,13 +150,11 @@ export default function index({
         renderItem={({ item, index }) =>
           loadingMessages ? (
             <SkeletonMessage isSender={index % 2 === 0} />
-          ) : item.id === "sending" ? ( 
+          ) : item.id === "sending" ? (
             <View style={styles.sentMessage("text")}>
-              <Text style={styles.messageText}>
-               Sending...
-              </Text>
+              <Text style={styles.messageText}>Sending...</Text>
             </View>
-          ) :(
+          ) : (
             <View>
               <View
                 style={
@@ -208,49 +216,30 @@ export default function index({
                         color="white"
                       />
                     </View>
-                    <View style={styles.audioWaveform}>
-                      {item.waveformUrl ? (
-                        <Image 
-                          source={{uri: item.waveformUrl}}
-                          style={{
-                            width: responsive.width(150),
-                            height: responsive.height(40),
-                            resizeMode: "contain",
-                          }}
-                        />
-                      ) : (
-                        <View style={{flexDirection: "row"}}>
-                          <MaterialCommunityIcons
-                        name="waveform"
-                        size={24}
-                        color="white"
+                    <View style={styles.sliderContainer}>
+                      <Slider
+                        style={{
+                          width: responsive.width(150),
+                          height: responsive.height(40),
+                        }}
+                        minimumValue={0}
+                        maximumValue={audioDuration}
+                        value={playingAudioId === item.id ? audioPosition : 0}
+                        minimumTrackTintColor="#FFFFFF"
+                        maximumTrackTintColor="#ccc"
+                        thumbTintColor="#FFFFFF"
+                        onSlidingComplete={async (value) => {
+                          if (currentSound && playingAudioId === item.id) {
+                            await currentSound.setPositionAsync(value);
+                            await currentSound.playAsync();
+                            setIsPlaying(true);
+                          }
+                        }}
                       />
-                      <MaterialCommunityIcons
-                        name="waveform"
-                        size={24}
-                        color="white"
-                      />
-                      <MaterialCommunityIcons
-                        name="waveform"
-                        size={24}
-                        color="white"
-                      />
-                      <MaterialCommunityIcons
-                        name="waveform"
-                        size={24}
-                        color="white"
-                      />
-                      <MaterialCommunityIcons
-                        name="waveform"
-                        size={24}
-                        color="white"
-                      />
-                        </View>
-                      )}
+                      <Text style={styles.audioDurationText}>
+                        {formatDuration(item.audioDuration)}
+                      </Text>
                     </View>
-                    <Text style={styles.audioDurationText}>
-                      {formatDuration(item.audioDuration)}
-                    </Text>
                   </TouchableOpacity>
                 ) : (
                   <TouchableOpacity
@@ -260,16 +249,6 @@ export default function index({
                     <Text style={styles.messageText}>{item.text}</Text>
                   </TouchableOpacity>
                 )}
-                {/* {item.sender === auth.currentUser.uid && (
-                  <FontAwesome5
-                    name={
-                      item.status === "pending" ? "clock" : "check-double"
-                    }
-                    size={16}
-                    color={item.status === "pending" ? "gray" : "blue"}
-                    style={{ marginLeft: 8, alignSelf: "flex-end" }}
-                  />
-                )} */}
               </View>
               <Text
                 style={[

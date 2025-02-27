@@ -41,7 +41,7 @@ export const useChatStyles = () => {
     audioMessageContainer: {
       flexDirection: "row",
       alignItems: "center",
-      padding: 5,
+      padding: 7,
       borderRadius: 20,
       maxWidth: "80%",
       alignSelf: "flex-start",
@@ -65,13 +65,17 @@ export const useChatStyles = () => {
     waveText: {
       fontSize: 18,
       color: "#075E54",
-      letterSpacing: 2, 
+      letterSpacing: 2,
+    },
+    sliderContainer: {
+      position: "relative",
     },
     audioDurationText: {
       color: "white",
       fontSize: 12,
-      alignSelf: "center",
-      marginTop: 45,
+      position: "absolute",
+      top: 24,
+      right: 0,
     },
   });
 };
