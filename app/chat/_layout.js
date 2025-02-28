@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Ionicons, Feather } from "@expo/vector-icons";
 import { useTheme } from "@/components/theme/ThemeContext";
+import Entypo from '@expo/vector-icons/Entypo';
 
 export default function Layout() {
   const theme = useTheme();
@@ -59,11 +60,11 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="screens/calls/index"
+        name="screens/status/index"
         options={{
-          title: "Calls",
+          title: "Status",
           tabBarIcon: ({ color }) => (
-            <Feather name="phone-call" size={24} color={color} />
+            <Entypo name="picasa" size={24} color={color} />
           ),
         }}
       />
@@ -87,7 +88,7 @@ export default function Layout() {
         }}
       />
       <Tabs.Screen
-        name="screens/calls/calls.styles"
+        name="screens/status/status.styles"
         options={{
           href: null,
         }}

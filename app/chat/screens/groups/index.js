@@ -198,7 +198,7 @@ export default function ContactsScreen() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
-      <MainScreenHeader />
+      <MainScreenHeader headerName="Groups" />
       <View style={styles.searchContainer}>
         <Ionicons
           name="search-outline"

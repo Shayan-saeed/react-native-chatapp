@@ -7,11 +7,11 @@ import { useTheme } from "@/components/theme/ThemeContext";
 import responsive from "@/utils/responsive";
 
 
-export default function MainScreenHeader() {
+export default function MainScreenHeader({headerName}) {
   const theme = useTheme();
   return (
     <View style={[styles.header, {borderBottomColor: theme.borderBottomColor}]}>
-      <Text style={[styles.username, {color: theme.textColor}]}>ChatApp</Text>
+      <Text style={[styles.username, {color: theme.textColor}]}>{headerName}</Text>
       <TouchableOpacity onPress={() => router.push("/chat/screens/profile")}>
         <Feather name="user" size={28} color={theme.textColor} />
       </TouchableOpacity>

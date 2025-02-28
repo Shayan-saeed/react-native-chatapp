@@ -247,7 +247,7 @@ export default function ChatListScreen() {
   
   return (
     <GestureHandlerRootView style={styles.container}>
-      <MainScreenHeader />
+      <MainScreenHeader headerName="ChatApp" />
       <View style={styles.searchContainer}>
         <Ionicons
           name="search-outline"
