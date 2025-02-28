@@ -12,7 +12,16 @@ import {
 import * as ImagePicker from "expo-image-picker";
 import { Ionicons, MaterialIcons, FontAwesome } from "@expo/vector-icons";
 import { useLocalSearchParams, router } from "expo-router";
-import { getDoc, doc, arrayRemove, updateDoc, deleteDoc } from "firebase/firestore";
+import {
+  getDoc,
+  doc,
+  updateDoc,
+  deleteDoc,
+  arrayUnion,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import { db, auth } from "../../../config/firebaseConfig";
 import { useFocusEffect } from "@react-navigation/native";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
@@ -40,7 +49,10 @@ const UserDetails = () => {
           const groupDoc = await getDoc(doc(db, "chats", id));
           if (groupDoc.exists()) {
             const groupData = groupDoc.data();
-            setGroupMembers(groupData.users);
+            const activeMembers = (groupData.users || []).filter(
+              (user) => !(groupData.leftUsers || []).includes(user)
+            );
+            setGroupMembers(activeMembers.length > 0 ? activeMembers : []);
             setGroupImage(groupData.groupImage);
           }
         } catch (error) {
@@ -113,9 +125,13 @@ const UserDetails = () => {
   };
 
   const fetchUserNames = async () => {
+    if (!groupMembers || groupMembers.length === 0) {
+      return; // Prevent running if groupMembers is undefined or empty
+    }
     try {
       const usersData = await Promise.all(
         groupMembers.map(async (userID) => {
+          if (!userID) return null;
           const userDoc = await getDoc(doc(db, "users", userID));
           if (userDoc.exists()) {
             return {
@@ -132,7 +148,7 @@ const UserDetails = () => {
       const usersWithCurrentOnTop = [
         filteredUsers.find((user) => user.id === currentUser),
         ...filteredUsers.filter((user) => user.id !== currentUser),
-      ];
+      ].filter(Boolean);;
       setGroupMembersWithNames(usersWithCurrentOnTop);
       setLoading(false);
     } catch (error) {
@@ -164,53 +180,70 @@ const UserDetails = () => {
 
   const handleLeaveGroup = async () => {
     if (chatType !== "group") return;
-
-    Alert.alert(
-      "Leave Group",
-      "Are you sure you want to leave this group?",
-      [
-        {
-          text: "Cancel",
-          style: "cancel",
-        },
-        {
-          text: "Leave",
-          style: "destructive",
-          onPress: async () => {
-            const currentUserID = auth.currentUser?.uid;
-
-            if (!id || !currentUserID) {
-              Alert.alert("Error", "Invalid group or user.");
+  
+    Alert.alert("Leave Group", "Are you sure you want to leave this group?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Leave",
+        style: "destructive",
+        onPress: async () => {
+          const currentUserID = auth.currentUser?.uid;
+  
+          if (!id || !currentUserID) {
+            Alert.alert("Error", "Invalid group or user.");
+            return;
+          }
+  
+          try {
+            const chatRef = doc(db, "chats", id);
+            const groupDoc = await getDoc(chatRef);
+  
+            if (!groupDoc.exists()) {
+              Alert.alert("Error", "Group does not exist.");
+              return;
+            }
+  
+            const groupData = groupDoc.data();
+            const leftUsers = groupData.leftUsers || [];
+  
+            if (leftUsers.includes(currentUserID)) {
+              Alert.alert("Error", "You have already left this group.");
               return;
             }
 
-            try {
-              const chatRef = doc(db, "chats", id);
-              await updateDoc(chatRef, {
-                users: arrayRemove(currentUserID),
-              });
-
-              const groupDoc = await getDoc(chatRef);
-              if (groupDoc.exists()) {
-                const updatedUsers = groupDoc.data().users || [];
-
-                if (updatedUsers.length < 2) {
-                  await deleteDoc(chatRef);
-                  console.log("Group deleted as it had less than 2 members.");
-                }
-              }
-
-              router.replace("/chat/screens/groups");
-            } catch (error) {
-              console.error("Error leaving group:", error);
-              Alert.alert("Error", "Failed to leave group. Please try again.");
+            await updateDoc(chatRef, {
+              leftUsers: arrayUnion(currentUserID),
+            });
+  
+            const userName = auth.currentUser.displayName;
+            console.log(userName);
+  
+            const messagesRef = collection(chatRef, "messages");
+            await addDoc(messagesRef, {
+              sender: "system",
+              text: `${userName} left the group.`,
+              timestamp: serverTimestamp(),
+            });
+  
+            const updatedUsers = groupData.users || [];
+            if (updatedUsers.length < 1) {
+              await deleteDoc(chatRef);
+              console.log("Group deleted as it had less than 1 member.");
             }
-          },
+  
+            router.replace("/chat/screens/groups");
+          } catch (error) {
+            console.error("Error leaving group:", error);
+            Alert.alert("Error", "Failed to leave group. Please try again.");
+          }
         },
-      ],
-      { cancelable: true }
-    );
+      },
+    ]);
   };
+  
 
   return (
     <View style={styles.container}>

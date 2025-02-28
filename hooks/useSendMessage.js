@@ -9,8 +9,10 @@ import {
   Timestamp,
 } from "firebase/firestore";
 import { db, auth } from "../app/config/firebaseConfig";
+import { Alert } from "react-native";
 
 function useSendMessage(id, chatType, setNewMessage, setSentLoading) {
+
   const sendMessage = async (messageType, messageContent, waveformUrl = null, duration = null) => {
     if (!messageContent.trim()) return;
 
@@ -28,6 +30,10 @@ function useSendMessage(id, chatType, setNewMessage, setSentLoading) {
       const chatRef = doc(db, "chats", chatID);
       const chatSnap = await getDoc(chatRef);
       let chatData = chatSnap.exists() ? chatSnap.data() : {};
+      if (chatData.leftUsers?.includes(currentUserID)) {
+        Alert.alert("Error", "You have left this group and cannot send messages.");
+        return;
+      }
       const messagesRef = collection(chatRef, "messages");
  
       let existingUnreadCount = 0;

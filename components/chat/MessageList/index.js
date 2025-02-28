@@ -154,6 +154,10 @@ export default function index({
             <View style={styles.sentMessage("text")}>
               <Text style={styles.messageText}>Sending...</Text>
             </View>
+          ) : item.sender === "system" ? (
+            <View style={{alignSelf: "center"}}>
+              <Text style={{color: "#ccc", fontSize: 14}}>{item.text}</Text>
+            </View>
           ) : (
             <View>
               <View

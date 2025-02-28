@@ -25,6 +25,8 @@ import AttachmentMenu from "@/components/chat/AttachmentMenu";
 import useChatData from "@/hooks/useChatData";
 import useMessages from "@/hooks/useMessages";
 import useSendMessage from "@/hooks/useSendMessage";
+import { db, auth } from "../../config/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams();
@@ -50,9 +52,45 @@ export default function ChatScreen() {
   const micScale = useRef(new Animated.Value(1)).current;
   const micBackground = useRef(new Animated.Value(0)).current;
   const [isPaused, setIsPaused] = useState(false);
+  const [isLeft, setIsLeft] = useState(false);
 
   const styles = useChatStyles();
   const theme = useTheme();
+
+  useEffect(() => {
+    setIsLeft(false);
+    const checkIfUserLeft = async () => {
+      try {
+        const currentUserID = auth.currentUser?.uid;
+
+        if (!id || !chatType) {
+          console.log("Missing chatID or chatType");
+          return;
+        }
+
+        if (chatType === "group") {
+          const chatRef = doc(db, "chats", id);
+          const chatSnap = await getDoc(chatRef);
+
+          if (chatSnap.exists()) {
+            const chatData = chatSnap.data();
+
+            if (chatData.leftUsers?.includes(currentUserID)) {
+              setIsLeft(true);
+            } else {
+              setIsLeft(false);
+            }
+          } else {
+            console.log("Chat document does not exist");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking if user left:", error);
+      }
+    };
+
+    checkIfUserLeft();
+  }, [chatType, id]);
 
   useEffect(() => {
     (async () => {
@@ -410,88 +448,119 @@ export default function ChatScreen() {
           />
         )}
 
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-        >
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <View
-              style={[
-                styles.inputContainer,
-                isRecording
-                  ? { backgroundColor: "#1E90FF" }
-                  : { backgroundColor: theme.searchContainerBG },
-              ]}
+        {isLeft ? (
+          <View
+            style={{
+              padding: 10,
+              backgroundColor: theme.backgroundColor,
+              borderRadius: 8,
+              margin: 10,
+            }}
+          >
+            <Text
+              style={{
+                color: "#a0a0a0",
+                fontSize: 14,
+                textAlign: "center",
+                flexWrap: "wrap",
+              }}
             >
-              {isRecording ? (
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <TouchableOpacity onPress={handleCancelRecording}>
-                    <Ionicons
-                      name="trash-bin"
-                      size={24}
-                      color={theme.textColor}
-                    />
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    onPress={isPaused ? resumeRecording : pauseRecording}
-                    style={{ marginLeft: 10 }}
-                  >
-                    <Ionicons
-                      name={isPaused ? "play" : "pause"}
-                      size={24}
-                      color={theme.textColor}
-                    />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <TouchableOpacity onPress={toggleAttachmentMenu}>
-                  <Ionicons name="attach" size={24} color={theme.textColor} />
-                </TouchableOpacity>
-              )}
-
-              {isRecording ? (
-                <View
-                  style={{
-                    flex: 1,
-                    justifyContent: "center",
-                    alignItems: "center",
-                  }}
-                >
-                  <Text style={{ color: theme.textColor, fontSize: 18 }}>
-                    {formatDuration(recordingDuration)}
-                  </Text>
-                </View>
-              ) : (
-                <TextInput
-                  style={styles.input}
-                  placeholder="Type a message"
-                  placeholderTextColor={theme.lastMessage}
-                  value={newMessage}
-                  onChangeText={(text) => setNewMessage(text)}
-                />
-              )}
-
-              {newMessage.trim() ? (
-                <Ionicons name="send" size={24} color={theme.textColor} />
-              ) : (
-                <Animated.View>
-                  <TouchableOpacity
-                    onPress={handleRecordButtonClick}
-                    style={styles.sendOrRecordButton}
-                  >
-                    <Animated.View style={{ transform: [{ scale: micScale }] }}>
+              You can't send messages to this group because you're no longer a
+              member
+            </Text>
+          </View>
+        ) : (
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View
+                style={[
+                  styles.inputContainer,
+                  isRecording
+                    ? { backgroundColor: "#1E90FF" }
+                    : { backgroundColor: theme.searchContainerBG },
+                ]}
+              >
+                {isRecording ? (
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <TouchableOpacity onPress={handleCancelRecording}>
                       <Ionicons
-                        name={isRecording ? "arrow-up" : "mic"}
-                        size={30}
+                        name="trash-bin"
+                        size={24}
                         color={theme.textColor}
                       />
-                    </Animated.View>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      onPress={isPaused ? resumeRecording : pauseRecording}
+                      style={{ marginLeft: 10 }}
+                    >
+                      <Ionicons
+                        name={isPaused ? "play" : "pause"}
+                        size={24}
+                        color={theme.textColor}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity onPress={toggleAttachmentMenu}>
+                    <Ionicons name="attach" size={24} color={theme.textColor} />
                   </TouchableOpacity>
-                </Animated.View>
-              )}
+                )}
+
+                {isRecording ? (
+                  <View
+                    style={{
+                      flex: 1,
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Text style={{ color: theme.textColor, fontSize: 18 }}>
+                      {formatDuration(recordingDuration)}
+                    </Text>
+                  </View>
+                ) : (
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Type a message"
+                    placeholderTextColor={theme.lastMessage}
+                    value={newMessage}
+                    onChangeText={(text) => setNewMessage(text)}
+                  />
+                )}
+
+                {newMessage.trim() ? (
+                  <TouchableOpacity
+                    onPress={() => {
+                      setSentLoading(true), sendMessage("text", newMessage);
+                    }}
+                  >
+                    <Ionicons name="send" size={24} color={theme.textColor} />
+                  </TouchableOpacity>
+                ) : (
+                  <Animated.View>
+                    <TouchableOpacity
+                      onPress={handleRecordButtonClick}
+                      style={styles.sendOrRecordButton}
+                    >
+                      <Animated.View
+                        style={{ transform: [{ scale: micScale }] }}
+                      >
+                        <Ionicons
+                          name={isRecording ? "arrow-up" : "mic"}
+                          size={30}
+                          color={theme.textColor}
+                        />
+                      </Animated.View>
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
+              </View>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+          </KeyboardAvoidingView>
+        )}
       </View>
     </TouchableWithoutFeedback>
   );
