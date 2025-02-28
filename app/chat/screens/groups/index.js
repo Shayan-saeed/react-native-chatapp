@@ -96,8 +96,6 @@ export default function ContactsScreen() {
     fetchGroups();
   }, []);
   
-  
-
   useEffect(() => {
       setFilteredGroups(groups);
     }, [groups]);
@@ -150,6 +148,7 @@ export default function ContactsScreen() {
         lastMessage: "",
         lastMessageTimestamp: Timestamp.now(),
         unreadCount,
+        groupAdmin: creatorId,
       });
 
       const groupChatId = groupChatRef.id;

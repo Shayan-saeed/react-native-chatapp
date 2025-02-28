@@ -21,13 +21,18 @@ import {
   collection,
   addDoc,
   serverTimestamp,
+  getDocs,
+  query,
+  where,
 } from "firebase/firestore";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { db, auth } from "../../../config/firebaseConfig";
 import { useFocusEffect } from "@react-navigation/native";
 import SkeletonHeader from "@/components/loaders/SkeletonHeader";
 import { useChatStyles } from "./userdetails.styles";
 import { useTheme } from "@/components/theme/ThemeContext";
 import responsive from "@/utils/responsive";
+import AddUserBottomSheet from "@/components/ui/AddUserToGroup";
 
 const UserDetails = () => {
   const { id, name, profileImage, chatType } = useLocalSearchParams();
@@ -35,33 +40,43 @@ const UserDetails = () => {
   const [groupImage, setGroupImage] = useState(null);
   const [groupMembersWithNames, setGroupMembersWithNames] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [uploading, setUploading] = useState(false);
   const styles = useChatStyles();
   const theme = useTheme();
+  const [showAddUserSheet, setShowAddUserSheet] = useState(false);
+  const [userEmail, setUserEmail] = useState("");
+  const [addUserloading, setAddUserLoading] = useState(false);
 
-  useEffect(() => {
-    if (chatType === "group") {
-      const fetchGroupDetails = async () => {
-        try {
-          setLoading(true);
-          setGroupMembers([]);
-          setGroupMembersWithNames([]);
-          const groupDoc = await getDoc(doc(db, "chats", id));
-          if (groupDoc.exists()) {
-            const groupData = groupDoc.data();
-            const activeMembers = (groupData.users || []).filter(
-              (user) => !(groupData.leftUsers || []).includes(user)
-            );
-            setGroupMembers(activeMembers.length > 0 ? activeMembers : []);
-            setGroupImage(groupData.groupImage);
-          }
-        } catch (error) {
-          console.error("Error fetching group details:", error);
-        }
-      };
-      fetchGroupDetails();
+  useFocusEffect(
+    useCallback(() => {
+      if (chatType === "group") {
+        fetchGroupDetails();
+      }
+    }, [chatType, id])
+  );
+
+  const fetchGroupDetails = async () => {
+    try {
+      setLoading(true);
+      setGroupMembers([]);
+      setGroupMembersWithNames([]);
+      const groupDoc = await getDoc(doc(db, "chats", id));
+      if (groupDoc.exists()) {
+        const groupData = groupDoc.data();
+        const activeMembers = (groupData.users || []).filter(
+          (user) => !(groupData.leftUsers || []).includes(user)
+        );
+        setGroupMembers(activeMembers.length > 0 ? activeMembers : []);
+        setGroupImage(groupData.groupImage);
+
+        const currentUser = auth.currentUser.uid;
+        setIsAdmin(groupData.groupAdmin === currentUser);
+      }
+    } catch (error) {
+      console.error("Error fetching group details:", error);
     }
-  }, [chatType, id]);
+  };
 
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -126,9 +141,17 @@ const UserDetails = () => {
 
   const fetchUserNames = async () => {
     if (!groupMembers || groupMembers.length === 0) {
-      return; // Prevent running if groupMembers is undefined or empty
+      return;
     }
     try {
+      const chatDocRef = doc(db, "chats", id);
+      const chatDocSnap = await getDoc(chatDocRef);
+
+      let adminID = null;
+      if (chatDocSnap.exists()) {
+        adminID = chatDocSnap.data().groupAdmin;
+      }
+
       const usersData = await Promise.all(
         groupMembers.map(async (userID) => {
           if (!userID) return null;
@@ -136,8 +159,10 @@ const UserDetails = () => {
           if (userDoc.exists()) {
             return {
               id: userID,
-              name: userDoc.data().name,
+              name:
+                userID === auth.currentUser.uid ? "You" : userDoc.data().name,
               profileImage: userDoc.data().profileImage,
+              isAdmin: userID === adminID,
             };
           }
           return null;
@@ -145,11 +170,18 @@ const UserDetails = () => {
       );
       const filteredUsers = usersData.filter((user) => user !== null);
       const currentUser = auth.currentUser.uid;
-      const usersWithCurrentOnTop = [
+
+      const adminUser = filteredUsers.find((user) => user.id === adminID);
+
+      const sortedUsers = [
         filteredUsers.find((user) => user.id === currentUser),
-        ...filteredUsers.filter((user) => user.id !== currentUser),
-      ].filter(Boolean);;
-      setGroupMembersWithNames(usersWithCurrentOnTop);
+        adminUser && adminUser.id !== currentUser ? adminUser : null,
+        ...filteredUsers.filter(
+          (user) => user.id !== currentUser && user.id !== adminID
+        ),
+      ].filter(Boolean);
+
+      setGroupMembersWithNames(sortedUsers);
       setLoading(false);
     } catch (error) {
       console.error("Error fetching user names:", error);
@@ -165,6 +197,7 @@ const UserDetails = () => {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = () => {
+        setShowAddUserSheet(false);
         router.push(`/chat/${id}`);
         return true;
       };
@@ -180,7 +213,7 @@ const UserDetails = () => {
 
   const handleLeaveGroup = async () => {
     if (chatType !== "group") return;
-  
+
     Alert.alert("Leave Group", "Are you sure you want to leave this group?", [
       {
         text: "Cancel",
@@ -191,24 +224,24 @@ const UserDetails = () => {
         style: "destructive",
         onPress: async () => {
           const currentUserID = auth.currentUser?.uid;
-  
+
           if (!id || !currentUserID) {
             Alert.alert("Error", "Invalid group or user.");
             return;
           }
-  
+
           try {
             const chatRef = doc(db, "chats", id);
             const groupDoc = await getDoc(chatRef);
-  
+
             if (!groupDoc.exists()) {
               Alert.alert("Error", "Group does not exist.");
               return;
             }
-  
+
             const groupData = groupDoc.data();
             const leftUsers = groupData.leftUsers || [];
-  
+
             if (leftUsers.includes(currentUserID)) {
               Alert.alert("Error", "You have already left this group.");
               return;
@@ -217,23 +250,22 @@ const UserDetails = () => {
             await updateDoc(chatRef, {
               leftUsers: arrayUnion(currentUserID),
             });
-  
+
             const userName = auth.currentUser.displayName;
-            console.log(userName);
-  
+
             const messagesRef = collection(chatRef, "messages");
             await addDoc(messagesRef, {
               sender: "system",
               text: `${userName} left the group.`,
               timestamp: serverTimestamp(),
             });
-  
+
             const updatedUsers = groupData.users || [];
             if (updatedUsers.length < 1) {
               await deleteDoc(chatRef);
               console.log("Group deleted as it had less than 1 member.");
             }
-  
+
             router.replace("/chat/screens/groups");
           } catch (error) {
             console.error("Error leaving group:", error);
@@ -243,10 +275,57 @@ const UserDetails = () => {
       },
     ]);
   };
-  
+
+  const openAddUserSheet = () => setShowAddUserSheet(true);
+  const closeAddUserSheet = () => setShowAddUserSheet(false);
+
+  const handleAddUserToGroup = async () => {
+    if (!userEmail.trim()) {
+      Alert.alert("Error", "Please enter an email.");
+      return;
+    }
+
+    setAddUserLoading(true);
+
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("email", "==", userEmail.toLowerCase()));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        Alert.alert("Error", "User not found.");
+        setAddUserLoading(false);
+        return;
+      }
+
+      const userDoc = querySnapshot.docs[0];
+      const userId = userDoc.id;
+
+      if (groupMembersWithNames.some((member) => member.id === userId)) {
+        Alert.alert("Error", "User is already a member of the group.");
+        setAddUserLoading(false);
+        return;
+      }
+
+      const chatRef = doc(db, "chats", id);
+      await updateDoc(chatRef, {
+        users: arrayUnion(userId),
+      });
+
+      Alert.alert("Success", "User added to the group.");
+      setUserEmail("");
+      closeAddUserSheet();
+      await fetchGroupDetails();
+    } catch (error) {
+      console.error("Error adding user to group:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setAddUserLoading(false);
+    }
+  };
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => router.push(`/chat/${id}`)}
@@ -265,31 +344,60 @@ const UserDetails = () => {
           }}
           style={styles.groupImage}
         />
-        {chatType === "group" && (
-          <TouchableOpacity onPress={pickImage} style={styles.editIcon}>
-            {uploading ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <MaterialIcons name="photo-camera" size={20} color="#fff" />
-            )}
-          </TouchableOpacity>
-        )}
+        {chatType === "group" &&
+          groupMembersWithNames.find(
+            (member) => member.id === auth.currentUser.uid
+          )?.isAdmin && (
+            <TouchableOpacity onPress={pickImage} style={styles.editIcon}>
+              {uploading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <MaterialIcons name="photo-camera" size={20} color="#fff" />
+              )}
+            </TouchableOpacity>
+          )}
       </View>
 
       <Text style={styles.userName}>
         {chatType === "group" ? name : name || "Unknown User"}
       </Text>
 
+      <AddUserBottomSheet
+        visible={showAddUserSheet}
+        onClose={closeAddUserSheet}
+        userEmail={userEmail}
+        setUserEmail={setUserEmail}
+        loading={addUserloading}
+        handleAddUser={handleAddUserToGroup}
+        setLoading={setAddUserLoading}
+      />
+
       <View style={styles.actionRow}>
         <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="call" size={24} color={theme.textColor} />
+          <Ionicons name="call" size={20} color={theme.textColor} />
           <Text style={styles.actionText}>Audio</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Ionicons name="videocam" size={24} color={theme.textColor} />
-          <Text style={styles.actionText}>Video</Text>
-        </TouchableOpacity>
+        {chatType === "group" &&
+          groupMembersWithNames.length > 0 &&
+          groupMembersWithNames.find(
+            (member) => member.id === auth.currentUser.uid
+          )?.isAdmin && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={openAddUserSheet}
+            >
+              <Ionicons name="person-add" size={20} color="#fff" />
+              <Text
+                style={[
+                  styles.actionText,
+                  { flexWrap: "wrap", textAlign: "center" },
+                ]}
+              >
+                Add
+              </Text>
+            </TouchableOpacity>
+          )}
 
         <TouchableOpacity style={styles.actionButton}>
           <Ionicons name="search" size={24} color={theme.textColor} />
@@ -344,6 +452,7 @@ const UserDetails = () => {
                   >
                     {item.name}
                   </Text>
+                  {item.isAdmin && <Text style={styles.adminBadge}>Admin</Text>}
                 </View>
               )}
               keyExtractor={(item) => item.id}
@@ -364,7 +473,7 @@ const UserDetails = () => {
         <FontAwesome name="thumbs-down" size={24} color="orange" />
         <Text style={styles.optionText}>Report {name}</Text>
       </TouchableOpacity>
-    </View>
+    </GestureHandlerRootView>
   );
 };
 

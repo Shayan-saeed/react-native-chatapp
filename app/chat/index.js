@@ -22,7 +22,6 @@ import {
 import { db, auth } from "../config/firebaseConfig";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Backdrop } from "react-native-backdrop";
 import MainScreenHeader from "@/components/ui/MainScreenHeader";
 import ChatList from "@/components/chat/ChatList";
 import ProfileModal from "@/components/modal/ProfileModal";
@@ -150,7 +149,6 @@ export default function ChatListScreen() {
           );
         });
 
-        console.log(sortedUsers);
         setUsers(sortedUsers);
         setLoading(false);
       });
@@ -201,8 +199,6 @@ export default function ChatListScreen() {
 
       const userDoc = querySnapshot.docs[0];
       const userToChatWith = { id: userDoc.id, ...userDoc.data() };
-
-      console.log(userToChatWith);
 
       const currentUserID = auth.currentUser.uid;
       const chatUsers = [currentUserID, userToChatWith.id].sort();
