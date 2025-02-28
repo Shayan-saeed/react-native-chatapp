@@ -26,7 +26,7 @@ export const useChatStyles = () => {
       flexDirection: "column",
     },
     heading: {
-      color: "white",
+      color: theme.textColor,
       fontSize: 16,
       fontWeight: 700,
     },
@@ -147,6 +147,20 @@ export const useChatStyles = () => {
     menuText: {
       fontSize: 16,
       color: "black",
+    },
+    navigationButtonLeft: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "20%",
+      height: "100%",
+    },
+    navigationButtonRight: {
+      position: "absolute",
+      top: 0,
+      right: 0,
+      width: "20%",
+      height: "100%",
     },
   });
 };

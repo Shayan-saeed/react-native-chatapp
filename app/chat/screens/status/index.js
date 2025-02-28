@@ -23,17 +23,47 @@ import {
   where,
   orderBy,
   deleteDoc,
+  setDoc,
+  onSnapshot,
 } from "firebase/firestore";
 import { auth, db } from "../../../config/firebaseConfig";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import * as ImagePicker from "expo-image-picker";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
+import GestureRecognizer from "react-native-swipe-gestures";
+import StatusListLoader from "@/components/loaders/StatusListLoader";
 
-const StatusItem = ({ imageUrl, name, time, onPress }) => {
+const StatusItem = ({
+  profileImage,
+  name,
+  time,
+  imageUrl,
+  onPress,
+  statusCount,
+}) => {
   const styles = useChatStyles();
+  const dashGap = Math.max(2, 10 / statusCount);
+  const borderStyle = {
+    borderWidth: 2,
+    borderColor: "#1E90FF",
+    borderRadius: 25,
+    ...(statusCount > 1 && {
+      borderStyle: "dashed",
+      borderRadius: 25,
+      borderWidth: 2,
+      borderColor: "#1E90FF",
+      dashGap: dashGap,
+    }),
+  };
   return (
-    <TouchableOpacity onPress={onPress} style={styles.statusItemContainer}>
-      <Image source={{ uri: imageUrl }} style={styles.statusProfileImage} />
+    <TouchableOpacity
+      onPress={() => onPress({ imageUrl, profileImage, name, time })}
+      style={styles.statusItemContainer}
+    >
+      <Image
+        source={{ uri: profileImage }}
+        style={[styles.statusProfileImage, borderStyle]}
+      />
       <View style={styles.statusTextContainer}>
         <Text style={styles.statusName}>{name}</Text>
         <Text style={styles.statusTime}>{time}</Text>
@@ -45,7 +75,6 @@ const StatusItem = ({ imageUrl, name, time, onPress }) => {
 export default function StatusScreen() {
   const styles = useChatStyles();
   const [userData, setUserData] = useState(null);
-  const [status, setStatus] = useState(null);
   const [statuses, setStatuses] = useState([]);
   const [myStatuses, setMyStatuses] = useState([]);
   const [selectedStatus, setSelectedStatus] = useState(null);
@@ -54,6 +83,9 @@ export default function StatusScreen() {
   const progressAnimation = useRef(new Animated.Value(0)).current;
   const [isPaused, setIsPaused] = useState(false);
   const timeoutRef = useRef(null);
+  const [viewingUserStatuses, setViewingUserStatuses] = useState([]);
+  const [currentStatusIndex, setCurrentStatusIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStatuses();
@@ -79,6 +111,11 @@ export default function StatusScreen() {
     };
 
     fetchUserData();
+
+    const unsubscribe = onSnapshot(collection(db, "status"), (snapshot) => {
+      fetchStatuses();
+    });
+    return () => unsubscribe();
   }, [currentUserID]);
 
   const toggleMenu = () => {
@@ -87,55 +124,63 @@ export default function StatusScreen() {
 
   const fetchStatuses = async () => {
     try {
+      setLoading(true);
       const statusRef = collection(db, "status");
-
       const now = new Date();
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const querySnapshot = await getDocs(statusRef);
 
-      const q = query(
-        statusRef,
-        where("timestamp", ">", twentyFourHoursAgo),
-        where("userId", "!=", currentUserID),
-        orderBy("timestamp", "desc")
-      );
-      const querySnapshot = await getDocs(q);
+      const fetchedStatuses = [];
 
-      const fetchedStatuses = querySnapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          profileImage: data.profileImage,
-          name: data.name,
-          time: formatTimestamp(data.timestamp),
-          imageUrl: data.imageUrl,
-        };
-      });
+      for (const docSnapshot of querySnapshot.docs) {
+        if (docSnapshot.id !== currentUserID) {
+          const userStatusRef = doc(db, "status", docSnapshot.id);
+          const statusesCollectionRef = collection(userStatusRef, "statuses");
+          const q = query(
+            statusesCollectionRef,
+            where("timestamp", ">", twentyFourHoursAgo),
+            orderBy("timestamp", "desc")
+          );
+          const statusQuerySnapshot = await getDocs(q);
 
+          const statusCount = statusQuerySnapshot.docs.length;
+
+          if (!statusQuerySnapshot.empty) {
+            const latestStatus = statusQuerySnapshot.docs[0].data();
+            fetchedStatuses.push({
+              id: docSnapshot.id,
+              profileImage: docSnapshot.data().profileImage,
+              name: docSnapshot.data().name,
+              time: formatTimestamp(latestStatus.timestamp),
+              imageUrl: latestStatus.imageUrl,
+              statusCount: statusCount,
+            });
+          }
+        }
+      }
       setStatuses(fetchedStatuses);
-      console.log(statuses);
+      setLoading(false);
     } catch (error) {
       console.error("Error fetching statuses:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
   const fetchMyStatuses = async () => {
     try {
-      const statusRef = collection(db, "status");
-      const q = query(
-        statusRef,
-        where("userId", "==", currentUserID),
-        orderBy("timestamp", "desc")
-      );
+      const userStatusRef = doc(db, "status", currentUserID);
+      const statusesCollectionRef = collection(userStatusRef, "statuses");
+      const q = query(statusesCollectionRef, orderBy("timestamp", "desc"));
+
       const querySnapshot = await getDocs(q);
 
       const fetchedStatuses = querySnapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
-          profileImage: data.profileImage,
-          name: data.name,
-          time: formatTimestamp(data.timestamp),
           imageUrl: data.imageUrl,
+          time: formatTimestamp(data.timestamp),
         };
       });
 
@@ -175,11 +220,71 @@ export default function StatusScreen() {
     }
   };
 
-  const handleStatusPress = (status) => {
-    setSelectedStatus(status);
+  const handleStatusPress = async (status, isCurrentUser = false) => {
+    try {
+      const userStatusRef = doc(db, "status", status.id);
+      const statusesCollectionRef = collection(userStatusRef, "statuses");
+      const q = query(statusesCollectionRef, orderBy("timestamp", "asc"));
+      const querySnapshot = await getDocs(q);
+
+      const fetchedStatuses = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        imageUrl: doc.data().imageUrl,
+        time: formatTimestamp(doc.data().timestamp),
+      }));
+
+      if (fetchedStatuses.length > 0) {
+        setViewingUserStatuses(fetchedStatuses);
+        setCurrentStatusIndex(0);
+        setSelectedStatus({
+          imageUrl: fetchedStatuses[0].imageUrl,
+          profileImage: status.profileImage,
+          name: status.name,
+          time: fetchedStatuses[0].time,
+          id: fetchedStatuses[0].id,
+        });
+      } else {
+        Alert.alert("No Status Found", "This user has no status updates.");
+      }
+
+      progressAnimation.setValue(0);
+      setIsPaused(false);
+
+      timeoutRef.current = setTimeout(() => {
+        setSelectedStatus(null);
+      }, 5000);
+
+      Animated.timing(progressAnimation, {
+        toValue: 1,
+        duration: 5000,
+        useNativeDriver: false,
+      }).start();
+    } catch (error) {
+      console.error("Error fetching user statuses:", error);
+    }
+  };
+
+  const navigateStatus = (direction) => {
+    let newIndex = currentStatusIndex + direction;
+    if (newIndex < 0) {
+      newIndex = viewingUserStatuses.length - 1;
+    } else if (newIndex >= viewingUserStatuses.length) {
+      newIndex = 0;
+    }
+    setCurrentStatusIndex(newIndex);
+    setSelectedStatus({
+      imageUrl: viewingUserStatuses[newIndex].imageUrl,
+      profileImage: selectedStatus.profileImage,
+      name: selectedStatus.name,
+      time: viewingUserStatuses[newIndex].time,
+      id: viewingUserStatuses[newIndex].id,
+    });
     progressAnimation.setValue(0);
     setIsPaused(false);
-
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       setSelectedStatus(null);
     }, 5000);
@@ -243,28 +348,27 @@ export default function StatusScreen() {
 
   const saveStatus = async (imageUrl) => {
     try {
-      const statusRef = collection(db, "status");
-      const newStatus = {
-        userId: currentUserID,
-        name: userData?.name || "Unknown",
-        profileImage:
-          userData?.profileImage ||
-          "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
+      const userStatusRef = doc(db, "status", currentUserID);
+      // const statusRef = collection(db, "status");
+
+      const userStatusDoc = await getDoc(userStatusRef);
+      if (!userStatusDoc.exists()) {
+        await setDoc(userStatusRef, {
+          userId: currentUserID,
+          name: userData?.name || "Unknown",
+          profileImage:
+            userData?.profileImage ||
+            "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
+        });
+      }
+
+      const statusesCollectionRef = collection(userStatusRef, "statuses");
+      await addDoc(statusesCollectionRef, {
         imageUrl: imageUrl,
         timestamp: serverTimestamp(),
-      };
-
-      await addDoc(statusRef, newStatus);
-
-      setStatus({
-        userId: currentUserID,
-        name: userData?.name || "Unknown",
-        profileImage:
-          userData?.profileImage ||
-          "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
-        imageUrl: imageUrl,
-        time: "Just now",
       });
+
+      fetchMyStatuses();
     } catch (error) {
       console.error("Error saving status:", error);
     }
@@ -287,21 +391,6 @@ export default function StatusScreen() {
     }
   };
 
-  // const deleteStatus = async () => {
-  //   try {
-  //     if (selectedStatus && selectedStatus.id) {
-  //       const userStatusRef = doc(db, "status", currentUserID);
-  //       const statusDocRef = doc(userStatusRef, "statuses", selectedStatus.id);
-  //       await deleteDoc(statusDocRef);
-
-  //       setSelectedStatus(null);
-  //       fetchMyStatuses(); // Refresh statuses after deletion
-  //     }
-  //   } catch (error) {
-  //     console.error("Error deleting status:", error);
-  //   }
-  // };
-
   return (
     <View style={styles.container}>
       <MainScreenHeader headerName="Status" />
@@ -309,27 +398,37 @@ export default function StatusScreen() {
         <TouchableOpacity
           onPress={
             myStatuses.length > 0
-              ? () => handleStatusPress(myStatuses[0])
+              ? () =>
+                  handleStatusPress(
+                    {
+                      id: currentUserID,
+                      profileImage: userData?.profileImage,
+                      name: userData?.name,
+                    },
+                    true
+                  )
               : pickImage
           }
           style={{ flexDirection: "row", alignItems: "center" }}
         >
-          <Image
-            source={{
-              uri:
-                userData?.profileImage ||
-                "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
-            }}
-            style={styles.profileImage}
-          />
-          {myStatuses.length < 1 ? (
-            <AntDesign
-              name="pluscircle"
-              size={22}
-              color="#1E90FF"
-              style={{ position: "absolute", right: 8, bottom: -5 }}
+          <View>
+            <Image
+              source={{
+                uri:
+                  userData?.profileImage ||
+                  "https://static.vecteezy.com/system/resources/thumbnails/003/337/584/small/default-avatar-photo-placeholder-profile-icon-vector.jpg",
+              }}
+              style={styles.profileImage}
             />
-          ) : null}
+            {myStatuses.length < 1 ? (
+              <AntDesign
+                name="pluscircle"
+                size={22}
+                color="#1E90FF"
+                style={{ position: "absolute", right: 2, bottom: 0 }}
+              />
+            ) : null}
+          </View>
 
           <View style={styles.addStatusView}>
             <Text style={styles.heading}>My status</Text>
@@ -342,7 +441,9 @@ export default function StatusScreen() {
         </TouchableOpacity>
       </View>
       <Text style={styles.recentUpdatesHeader}>Recent updates</Text>
-      {statuses.length > 0 ? (
+      {loading ? (
+        <StatusListLoader />
+      ) : statuses.length > 0 ? (
         <FlatList
           data={statuses}
           keyExtractor={(item) => item.id}
@@ -354,87 +455,114 @@ export default function StatusScreen() {
         <Text style={styles.noStatusText}>No recent updates</Text>
       )}
       <Modal visible={!!selectedStatus} transparent animationType="fade">
-        <View style={styles.modalContainer}>
-          {selectedStatus && (
-            <>
-              <Animated.View
-                style={[
-                  styles.progressBar,
-                  {
-                    width: progressAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ["0%", "100%"],
-                    }),
-                  },
-                ]}
-              />
-              <View style={styles.modalHeader}>
-                <View style={{ flexDirection: "row" }}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      if (timeoutRef.current) {
-                        clearTimeout(timeoutRef.current);
-                        timeoutRef.current = null;
-                      }
-                      setSelectedStatus(null);
-                    }}
-                    style={styles.backButton}
-                  >
-                    <AntDesign name="arrowleft" size={24} color="white" />
-                  </TouchableOpacity>
-                  <View style={styles.userInfoContainer}>
-                    <Image
-                      source={{ uri: selectedStatus.profileImage }}
-                      style={styles.modalProfileImage}
-                    />
-                    <View>
-                      <Text style={styles.modalName}>
-                        {selectedStatus.name}
-                      </Text>
-                      <Text style={styles.modalTime}>
-                        {selectedStatus.time}
-                      </Text>
+        <GestureRecognizer
+          onSwipeDown={() => {
+            setViewingUserStatuses();
+            setCurrentStatusIndex(0);
+            setSelectedStatus(null);
+            setIsPaused(false);
+            progressAnimation.setValue(0);
+            clearTimeout(timeoutRef.current);
+          }}
+          style={{ flex: 1 }}
+        >
+          <View style={styles.modalContainer}>
+            {selectedStatus && (
+              <>
+                <Animated.View
+                  style={[
+                    styles.progressBar,
+                    {
+                      width: progressAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ["0%", "100%"],
+                      }),
+                    },
+                  ]}
+                />
+                <View style={styles.modalHeader}>
+                  <View style={{ flexDirection: "row" }}>
+                    <TouchableOpacity
+                      onPress={() => {
+                        if (timeoutRef.current) {
+                          clearTimeout(timeoutRef.current);
+                          timeoutRef.current = null;
+                        }
+                        setSelectedStatus(null);
+                      }}
+                      style={styles.backButton}
+                    >
+                      <AntDesign name="arrowleft" size={24} color="white" />
+                    </TouchableOpacity>
+                    <View style={styles.userInfoContainer}>
+                      <Image
+                        source={{ uri: selectedStatus.profileImage }}
+                        style={styles.modalProfileImage}
+                      />
+                      <View>
+                        <Text style={styles.modalName}>
+                          {selectedStatus.name}
+                        </Text>
+                        <Text style={styles.modalTime}>
+                          {selectedStatus.time}
+                        </Text>
+                      </View>
                     </View>
                   </View>
+                  <TouchableOpacity
+                    style={styles.infoButton}
+                    onPress={toggleMenu}
+                  >
+                    <AntDesign name="infocirlceo" size={24} color="white" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.infoButton} onPress={toggleMenu}>
-                  <AntDesign name="infocirlceo" size={24} color="white" />
-                </TouchableOpacity>
-              </View>
-              <Modal visible={isMenuVisible} transparent animationType="fade">
+                <Modal visible={isMenuVisible} transparent animationType="fade">
+                  <TouchableOpacity
+                    style={styles.menuOverlay}
+                    onPress={() => setIsMenuVisible(false)}
+                  >
+                    <View style={styles.menuContainer}>
+                      {selectedStatus?.name === userData?.name && (
+                        <TouchableOpacity
+                          style={styles.menuItem}
+                          onPress={() => {
+                            // deleteStatus();
+                            setIsMenuVisible(false);
+                          }}
+                        >
+                          <Text style={styles.menuText}>Delete</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </Modal>
                 <TouchableOpacity
-                  style={styles.menuOverlay}
-                  onPress={() => setIsMenuVisible(false)}
+                  onLongPress={handleLongPress}
+                  onPressOut={handlePressOut}
+                  activeOpacity={1}
+                  style={{ flex: 1, position: "relative", zIndex: 1 }}
                 >
-                  <View style={styles.menuContainer}>
-                    {selectedStatus?.name === userData?.name && (
+                  <Image
+                    source={{ uri: selectedStatus.imageUrl }}
+                    style={styles.fullScreenImage}
+                  />
+                  {viewingUserStatuses.length > 1 && (
+                    <>
                       <TouchableOpacity
-                        style={styles.menuItem}
-                        onPress={() => {
-                          // deleteStatus();
-                          setIsMenuVisible(false);
-                        }}
-                      >
-                        <Text style={styles.menuText}>Delete</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
+                        style={styles.navigationButtonLeft}
+                        onPress={() => navigateStatus(-1)}
+                      />
+                      <TouchableOpacity
+                        style={styles.navigationButtonRight}
+                        onPress={() => navigateStatus(1)}
+                      />
+                    </>
+                  )}
                 </TouchableOpacity>
-              </Modal>
-              <TouchableOpacity
-                onLongPress={handleLongPress}
-                onPressOut={handlePressOut}
-                activeOpacity={1}
-                style={{ flex: 1 }}
-              >
-                <Image
-                  source={{ uri: selectedStatus.imageUrl }}
-                  style={styles.fullScreenImage}
-                />
-              </TouchableOpacity>
-            </>
-          )}
-        </View>
+              </>
+            )}
+          </View>
+        </GestureRecognizer>
       </Modal>
       <TouchableOpacity style={styles.floatingButton} onPress={pickImage}>
         <MaterialIcons name="add-a-photo" size={28} color="white" />
